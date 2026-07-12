@@ -96,6 +96,9 @@ For distributed iOS builds, use `ios/project.yml` as the source of truth, update
 
 - 2026-07-12: `xcodegen generate` succeeded.
 - 2026-07-12: `xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build` succeeded, including `JarvisWidgets.appex` embed.
+- 2026-07-12: Installed and launched Jarvis on iPhone 17 iOS 26.5 Simulator (`067DE2A0-9E13-49E6-AFA5-C78D3155EA94`).
+- 2026-07-12: Confirmed `br.app.egger.jarvis.widgets` appears in simulator `pluginkit` output.
+- 2026-07-12: Installed Additional Tools for Xcode 26.6 CarPlay Simulator locally. CarPlay Simulator opens, but it requires a real/remote iPhone/iPad connection and does not connect to CoreSimulator iOS devices.
 
 ## Recent Decisions
 
@@ -106,6 +109,7 @@ For distributed iOS builds, use `ios/project.yml` as the source of truth, update
 ## Known Risks And Pending Work
 
 - CarPlay app entitlement is pending Apple review. Full CarPlay app UI cannot be tested as a real CarPlay app until Apple approves the appropriate entitlement and provisioning profile.
+- CarPlay Simulator cannot validate this widget using only the iOS Simulator. To test in CarPlay Simulator, use an iPhone with the TestFlight build installed, connect/unlock/trust it, then select/connect that device in CarPlay Simulator. This does not require direct installation from Xcode.
 - Before TestFlight with the widget extension, ensure provisioning supports the embedded extension bundle id `br.app.egger.jarvis.widgets`.
 - Live Activity still needs product behavior: decide when to start, update and end it from `JarvisSession`.
 - Widget currently does not read live Jarvis state. If real data is desired, add an App Group and a privacy-conscious shared state model.
