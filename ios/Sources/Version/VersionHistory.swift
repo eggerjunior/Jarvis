@@ -10,11 +10,21 @@ struct VersionEntry: Identifiable, Hashable {
 }
 
 enum VersionHistory {
-    static let currentVersionFallback = "1.2.1"
-    static let currentBuildFallback = "7"
+    static let currentVersionFallback = "1.2.2"
+    static let currentBuildFallback = "8"
     static let currentCommitFallback = "dev"
 
     static let entries: [VersionEntry] = [
+        VersionEntry(
+            version: "1.2.2",
+            build: "8",
+            date: "12/07/2026",
+            changes: [
+                "Adicionado gasto da organização (mês atual) ao resultado do Testar modelo, via Admin API.",
+                "Deixado explícito que a Anthropic não expõe saldo restante nem gasto por chave individual."
+            ],
+            isCurrent: true
+        ),
         VersionEntry(
             version: "1.2.1",
             build: "7",
@@ -23,7 +33,7 @@ enum VersionHistory {
                 "Movidos API KEY, MODELO, TESTE e VOZ para uma tela de Configurações separada, acessível por um botão de engrenagem.",
                 "Tela inicial simplificada, mostrando apenas status e o botão Ativar."
             ],
-            isCurrent: true
+            isCurrent: false
         ),
         VersionEntry(
             version: "1.2.0",

@@ -108,10 +108,29 @@ final class JarvisSession: ObservableObject {
             do {
                 let result = try await client.testModel(apiKey: apiKey, model: selectedModel)
                 let usage = tokenSummary(input: result.inputTokens, output: result.outputTokens)
-                modelTestLine = "Pedido: \(result.requestedModel)\nResposta API: \(result.responseModel)\nTokens: \(usage)\nRetorno: \(result.text)"
+                var line = "Pedido: \(result.requestedModel)\nResposta API: \(result.responseModel)\nTokens: \(usage)\nRetorno: \(result.text)"
+                line += "\n\(await spendSummary())"
+                modelTestLine = line
             } catch {
                 modelTestLine = "Falha no teste: \(classify(error))"
             }
+        }
+    }
+
+    /// A Anthropic não expõe saldo restante via API — só o gasto acumulado, e apenas por
+    /// organização/workspace (não por chave individual). Isso exige que a chave usada tenha
+    /// escopo de administrador; com uma chave comum, o card informa a limitação.
+    private func spendSummary() async -> String {
+        do {
+            let spend = try await client.fetchMonthToDateSpend(apiKey: apiKey)
+            let formatted = String(format: "%.2f", spend.amount)
+            return "Gasto da organização neste mês: \(spend.currency) \(formatted) (via Admin API; saldo restante não é exposto pela Anthropic, e o gasto não é discriminado por chave individual)."
+        } catch {
+            let ns = error as NSError
+            if ns.code == 401 || ns.code == 403 {
+                return "Gasto: indisponível — esta chave não tem escopo de administrador (Admin API Key) para consultar custos."
+            }
+            return "Gasto: não foi possível consultar agora (\(ns.localizedDescription))."
         }
     }
 
