@@ -1,0 +1,32 @@
+.DS_Store
+
+# Secrets
+*.p8
+**/asc.env
+.env
+.env.*
+
+# Node / web
+node_modules/
+frontend/node_modules/
+dist/
+build/
+.vite/
+
+# Python
+.venv/
+backend/.venv/
+__pycache__/
+*.pyc
+
+# Xcode
+DerivedData/
+*.xcarchive
+*.ipa
+*.xcdistributionlogs
+ios/build/
+ios/DerivedData/
+
+# Local editor state
+.idea/
+.vscode/

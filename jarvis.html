@@ -1,0 +1,1482 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jarvis v5.0</title>
+  <style>
+    :root {
+      --theme: #2dd4ff;
+      --violet: #8b7cff;
+      --bg: #05070d;
+      --panel: rgba(9, 16, 30, .78);
+      --text: #e8f7ff;
+      --muted: #8a9bb0;
+      --line: rgba(45, 212, 255, .28);
+      --danger: #ff5547;
+      --ok: #10b981;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 50% 18%, rgba(45, 212, 255, .18), transparent 28rem),
+        radial-gradient(circle at 78% 72%, rgba(139, 124, 255, .13), transparent 26rem),
+        linear-gradient(140deg, #02040a, #07111d 46%, #05070d);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+      color: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: rgba(45, 212, 255, .08);
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); border-color: rgba(45, 212, 255, .62); background: rgba(45, 212, 255, .14); }
+    button:active { transform: translateY(0); }
+
+    .boot, .activate {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(rgba(45, 212, 255, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 212, 255, .035) 1px, transparent 1px),
+        radial-gradient(circle, rgba(45, 212, 255, .18), transparent 34rem),
+        #03060c;
+      background-size: 42px 42px, 42px 42px, auto, auto;
+      transition: opacity .7s ease, visibility .7s ease;
+    }
+
+    .boot.hidden, .activate.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .boot-card, .activate-card {
+      width: min(760px, calc(100vw - 32px));
+      text-align: center;
+    }
+
+    .brand {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: clamp(3.2rem, 13vw, 9rem);
+      font-weight: 900;
+      letter-spacing: 0;
+      line-height: .9;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, var(--theme), #ffffff 45%, var(--violet));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 24px rgba(45, 212, 255, .45));
+    }
+
+    .boot-line {
+      height: 2px;
+      margin: 28px auto 22px;
+      width: min(540px, 86vw);
+      background: linear-gradient(90deg, transparent, var(--theme), var(--violet), transparent);
+      box-shadow: 0 0 24px rgba(45, 212, 255, .6);
+    }
+
+    .sync {
+      color: var(--theme);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 800;
+      animation: blink 1s steps(2, start) infinite;
+    }
+
+    .version {
+      margin-top: 28px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: .88rem;
+    }
+
+    @keyframes blink { 50% { opacity: .25; } }
+
+    .activate { z-index: 18; opacity: 0; visibility: hidden; }
+    .activate.visible { opacity: 1; visibility: visible; }
+    .activate.visible.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .activate-button {
+      margin-top: 34px;
+      min-height: 56px;
+      padding: 0 28px;
+      border-radius: 8px;
+      color: #031018;
+      background: linear-gradient(90deg, var(--theme), #b8f3ff);
+      border-color: rgba(255,255,255,.55);
+      font-weight: 900;
+      box-shadow: 0 0 28px rgba(45, 212, 255, .36);
+    }
+
+    .click-hint {
+      margin-top: 18px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: .82rem;
+    }
+
+    .activate-key {
+      width: min(720px, calc(100vw - 32px));
+      margin: 28px auto 0;
+      text-align: left;
+    }
+
+    .app {
+      min-height: 100vh;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .55s ease, transform .55s ease;
+      pointer-events: none;
+    }
+
+    .app.ready {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: 1fr minmax(280px, 520px) minmax(180px, 260px);
+      gap: 16px;
+      align-items: center;
+      padding: 14px clamp(14px, 4vw, 34px);
+      background: rgba(3, 6, 12, .78);
+      border-bottom: 1px solid rgba(45, 212, 255, .16);
+      backdrop-filter: blur(14px);
+    }
+
+    .key-box {
+      display: grid;
+      grid-template-columns: auto minmax(180px, 1fr) auto auto minmax(190px, 240px);
+      gap: 10px;
+      align-items: center;
+      min-height: 50px;
+      padding: 8px;
+      border: 1px solid rgba(45, 212, 255, .42);
+      border-radius: 8px;
+      background: rgba(45, 212, 255, .08);
+      box-shadow: 0 0 24px rgba(45, 212, 255, .12);
+    }
+
+    .activate-key .key-box {
+      background: rgba(3, 8, 16, .72);
+      backdrop-filter: blur(12px);
+    }
+
+    .key-label {
+      color: var(--theme);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: .78rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .api-key {
+      width: 100%;
+      height: 42px;
+      border: 1px solid rgba(45, 212, 255, .5);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, .34);
+      padding: 0 12px;
+      outline: none;
+    }
+
+    .api-key:focus { border-color: var(--theme); box-shadow: 0 0 0 3px rgba(45, 212, 255, .12); }
+
+    .voice-select {
+      width: 100%;
+      height: 50px;
+      border: 1px solid rgba(45, 212, 255, .42);
+      border-radius: 8px;
+      background: rgba(45, 212, 255, .08);
+      padding: 0 10px;
+      outline: none;
+      color: var(--text);
+    }
+
+    .model-select {
+      width: 100%;
+      height: 42px;
+      border: 1px solid rgba(45, 212, 255, .42);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, .34);
+      padding: 0 10px;
+      outline: none;
+      color: var(--text);
+    }
+
+    .key-toggle {
+      min-width: 76px;
+      height: 42px;
+      border-radius: 8px;
+      font-size: .82rem;
+      font-weight: 800;
+    }
+
+    .key-test {
+      min-width: 70px;
+      height: 42px;
+      border-radius: 8px;
+      font-size: .82rem;
+      font-weight: 800;
+      color: #031018;
+      background: linear-gradient(90deg, var(--theme), #b8f3ff);
+    }
+
+    .key-state {
+      grid-column: 2 / 6;
+      color: var(--muted);
+      font-size: .78rem;
+      min-height: 16px;
+    }
+
+    .key-state.saved { color: var(--ok); }
+
+    .status-pill {
+      justify-self: start;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid rgba(45, 212, 255, .26);
+      border-radius: 999px;
+      color: var(--theme);
+      background: rgba(45, 212, 255, .07);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: .82rem;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--theme);
+      box-shadow: 0 0 12px var(--theme);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 34px 0 44px;
+    }
+
+    .console {
+      display: grid;
+      grid-template-columns: minmax(280px, 420px) 1fr;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .orb-zone {
+      display: grid;
+      place-items: center;
+      min-height: 420px;
+    }
+
+    .orb {
+      position: relative;
+      width: min(74vw, 300px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 1px solid rgba(45, 212, 255, .65);
+      background:
+        radial-gradient(circle at 50% 50%, #ffffff 0 7%, var(--theme) 8% 18%, rgba(45, 212, 255, .28) 19% 32%, transparent 33%),
+        conic-gradient(from 0deg, transparent, rgba(45, 212, 255, .65), transparent, rgba(139, 124, 255, .48), transparent);
+      box-shadow:
+        inset 0 0 34px rgba(255, 255, 255, .26),
+        inset 0 0 70px rgba(45, 212, 255, .34),
+        0 0 46px rgba(45, 212, 255, .48);
+      animation: orbIdle 3.2s ease-in-out infinite;
+    }
+
+    .orb::before, .orb::after {
+      content: "";
+      position: absolute;
+      inset: -22px;
+      border-radius: 50%;
+      border: 1px solid rgba(45, 212, 255, .26);
+      animation: ring 2.7s ease-in-out infinite;
+    }
+
+    .orb::after {
+      inset: -46px;
+      animation-delay: .7s;
+      border-color: rgba(139, 124, 255, .22);
+    }
+
+    .orb.listening { animation: orbListen 1.5s ease-in-out infinite; }
+    .orb.thinking { animation: orbThink .72s ease-in-out infinite; }
+    .orb.speaking { animation: orbSpeak 1.2s ease-in-out infinite; }
+
+    @keyframes orbIdle { 50% { transform: scale(1.025); filter: brightness(1.12); } }
+    @keyframes orbListen { 50% { transform: scale(1.06); box-shadow: inset 0 0 42px rgba(255,255,255,.34), 0 0 70px rgba(45,212,255,.72); } }
+    @keyframes orbThink { 50% { transform: scale(.98); filter: saturate(1.6) brightness(1.3); } }
+    @keyframes orbSpeak { 50% { transform: scale(1.04); box-shadow: inset 0 0 36px rgba(255,255,255,.28), 0 0 58px rgba(139,124,255,.58); } }
+    @keyframes ring { 0%,100% { opacity: .18; transform: scale(.96); } 50% { opacity: .78; transform: scale(1.05); } }
+
+    .dialogue {
+      border: 1px solid rgba(45, 212, 255, .2);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 60px rgba(0,0,0,.3);
+      padding: clamp(18px, 4vw, 28px);
+    }
+
+    .assistant-name {
+      margin: 0 0 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: clamp(2.6rem, 8vw, 5.4rem);
+      line-height: .92;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, var(--theme), var(--violet));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .line {
+      min-height: 58px;
+      margin: 12px 0;
+      padding: 14px;
+      border-left: 2px solid rgba(45, 212, 255, .5);
+      background: rgba(255,255,255,.035);
+      border-radius: 0 8px 8px 0;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: .74rem;
+      text-transform: uppercase;
+    }
+
+    .text-input-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .command-input {
+      min-width: 0;
+      height: 46px;
+      padding: 0 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(45, 212, 255, .25);
+      background: rgba(0,0,0,.28);
+      outline: none;
+    }
+
+    .icon-btn {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      font-weight: 900;
+    }
+
+    .brain {
+      margin-top: 28px;
+      border: 1px solid rgba(45, 212, 255, .2);
+      border-radius: 8px;
+      background: rgba(5, 10, 19, .76);
+      overflow: hidden;
+    }
+
+    .brain-header {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(45, 212, 255, .14);
+    }
+
+    .brain-title {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 1rem;
+      color: var(--theme);
+    }
+
+    .brain-subtitle {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    .brain-count {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      white-space: nowrap;
+      font-size: .82rem;
+    }
+
+    .graph-wrap {
+      position: relative;
+      min-height: 420px;
+      background:
+        linear-gradient(rgba(45, 212, 255, .03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 212, 255, .03) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    .graph-wrap svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-height: 420px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      align-items: center;
+      padding: 12px 16px 16px;
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    .legend-item { display: inline-flex; align-items: center; gap: 7px; }
+    .swatch { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+    .injected { margin-left: auto; color: var(--ok); }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(0,0,0,.64);
+    }
+
+    .modal.open { display: grid; }
+    .editor {
+      width: min(520px, 100%);
+      border: 1px solid rgba(45, 212, 255, .3);
+      border-radius: 8px;
+      background: #07111d;
+      padding: 18px;
+      box-shadow: 0 30px 90px rgba(0,0,0,.5);
+    }
+
+    .editor h2 {
+      margin: 0 0 16px;
+      color: var(--theme);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 1.1rem;
+    }
+
+    .field { display: grid; gap: 6px; margin-bottom: 12px; }
+    .field span { color: var(--muted); font-size: .84rem; }
+    .field input, .field textarea, .field select {
+      width: 100%;
+      border: 1px solid rgba(45, 212, 255, .22);
+      border-radius: 8px;
+      background: rgba(0,0,0,.28);
+      padding: 10px;
+      outline: none;
+    }
+
+    .field textarea { min-height: 130px; resize: vertical; }
+    .editor-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+    .danger { border-color: rgba(255, 85, 71, .5); color: #ffd1cd; background: rgba(255, 85, 71, .1); margin-right: auto; }
+    .primary { background: linear-gradient(90deg, var(--theme), #b8f3ff); color: #031018; font-weight: 900; }
+
+    .node-group { cursor: pointer; }
+    .node-breathe { animation: breathe 2.5s ease-in-out infinite; transform-origin: center; }
+    .flash .node-main { animation: flashNode 1s ease-in-out 3; }
+    .edge { stroke-dasharray: 9 12; animation: dash 2.8s linear infinite; }
+    .core-pulse { animation: corePulse 2s ease-in-out infinite; transform-origin: center; }
+
+    @keyframes breathe { 50% { opacity: .35; transform: scale(1.3); } }
+    @keyframes dash { to { stroke-dashoffset: -42; } }
+    @keyframes corePulse { 50% { transform: scale(1.08); opacity: .82; } }
+    @keyframes flashNode { 50% { filter: brightness(2.7); } }
+
+    @media (max-width: 820px) {
+      .topbar, .console { grid-template-columns: 1fr; }
+      .key-box { grid-template-columns: 1fr auto auto; }
+      .key-label { grid-column: 1 / -1; }
+      .model-select { grid-column: 1 / -1; }
+      .key-state { grid-column: 1 / -1; }
+      .orb-zone { min-height: 330px; }
+      .text-input-row { grid-template-columns: 1fr auto auto; }
+      .brain-header { grid-template-columns: 1fr auto auto; }
+      .brain-count { grid-column: 1 / -1; }
+      .injected { margin-left: 0; width: 100%; }
+    }
+
+    @media (max-width: 520px) {
+      main { width: min(100% - 18px, 1180px); padding-top: 20px; }
+      .dialogue { padding: 14px; }
+      .line { font-size: .94rem; }
+      .text-input-row { grid-template-columns: 1fr 44px 44px; gap: 8px; }
+      .icon-btn { width: 44px; height: 44px; }
+      .brain-header { padding: 12px; }
+      .graph-wrap svg { min-height: 360px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="boot" id="boot">
+    <div class="boot-card">
+      <h1 class="brand">Jarvis</h1>
+      <div class="boot-line"></div>
+      <div class="sync">SINCRONIZANDO DADOS...</div>
+      <div class="version">v5.0 · REBUILD</div>
+    </div>
+  </section>
+
+  <section class="activate" id="activate">
+    <div class="activate-card">
+      <h1 class="brand">Jarvis</h1>
+      <button class="activate-button" id="activateBtn" type="button">► ATIVAR SISTEMA</button>
+      <div class="click-hint">CLIQUE PARA INICIAR</div>
+      <div class="activate-key">
+        <label class="key-box">
+          <span class="key-label">API KEY</span>
+          <input class="api-key" id="activationApiKey" type="password" autocomplete="off" placeholder="Cole aqui sua chave da Anthropic antes de ativar">
+          <button class="key-toggle" id="activationToggleKey" type="button">Mostrar</button>
+          <button class="key-test" id="activationTestKey" type="button">Testar</button>
+          <select class="model-select" id="activationModelSelect" title="Modelo Claude"></select>
+          <span class="key-state" id="activationKeyState">Nenhuma chave salva.</span>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="status-pill"><span class="dot"></span><span id="status">Sistema em espera</span></div>
+      <label class="key-box">
+        <span class="key-label">API KEY</span>
+        <input class="api-key" id="apiKey" type="password" autocomplete="off" placeholder="Cole aqui sua chave da Anthropic">
+        <button class="key-toggle" id="toggleKey" type="button">Mostrar</button>
+        <button class="key-test" id="testKey" type="button">Testar</button>
+        <select class="model-select" id="modelSelect" title="Modelo Claude"></select>
+        <span class="key-state" id="keyState">Nenhuma chave salva.</span>
+      </label>
+      <select class="voice-select" id="voiceSelect" title="Voz do Jarvis">
+        <option value="">Voz automática</option>
+      </select>
+    </header>
+
+    <main>
+      <section class="console">
+        <div class="orb-zone">
+          <button class="orb" id="orb" type="button" aria-label="Ativar escuta"></button>
+        </div>
+        <div class="dialogue">
+          <h2 class="assistant-name">Jarvis</h2>
+          <div class="line"><span class="label">Senhor</span><span id="userLine">Aguardando comando.</span></div>
+          <div class="line"><span class="label">Jarvis</span><span id="assistantLine">Sistemas prontos.</span></div>
+          <div class="text-input-row">
+            <input class="command-input" id="commandInput" type="text" placeholder="ou digite e tecle Enter">
+            <button class="icon-btn" id="micBtn" type="button" title="Falar agora">●</button>
+            <button class="icon-btn" id="stopBtn" type="button" title="Interromper fala">■</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="brain">
+        <div class="brain-header">
+          <div>
+            <h3 class="brain-title">🧠 SECOND BRAIN</h3>
+            <p class="brain-subtitle">Contexto visual vivo do Senhor.</p>
+          </div>
+          <div class="brain-count" id="brainCount">0 notas · 0 áreas</div>
+          <button class="icon-btn" id="addNote" type="button" title="Nova nota">+</button>
+          <button class="icon-btn" id="reloadNotes" type="button" title="Recarregar">↻</button>
+        </div>
+        <div class="graph-wrap" id="graph"></div>
+        <div class="legend" id="legend"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="editor">
+      <h2>Editar nota</h2>
+      <label class="field"><span>Título</span><input id="noteTitle" type="text"></label>
+      <label class="field"><span>Área</span><select id="noteArea"></select></label>
+      <label class="field"><span>Conteúdo</span><textarea id="noteBody"></textarea></label>
+      <div class="editor-actions">
+        <button class="danger" id="deleteNote" type="button">Excluir</button>
+        <button id="cancelEdit" type="button">Cancelar</button>
+        <button class="primary" id="saveNote" type="button">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CONFIG = {
+      name: "Jarvis",
+      address: "Senhor",
+      themeColor: "azul reator",
+      persona: "Formal Britânico",
+      wakeWord: "ei jarvis",
+      voiceGender: "masculina",
+      model: "claude-sonnet-5"
+    };
+
+    const MODELS = [
+      { id: "claude-sonnet-5", label: "Claude Sonnet 5" },
+      { id: "claude-opus-4-8", label: "Claude Opus 4.8" },
+      { id: "claude-fable-5", label: "Claude Fable 5" },
+      { id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5" }
+    ];
+
+    const AREA = {
+      metas: { label: "Metas", color: "#fbbf24" },
+      trabalho: { label: "Carreira", color: "#ff5547" },
+      projetos: { label: "Projetos", color: "#8b7cff" },
+      financas: { label: "Finanças", color: "#f7931a" },
+      aprendizado: { label: "Aprendizado", color: "#2dd4ff" },
+      saude: { label: "Saúde", color: "#10b981" },
+      relacoes: { label: "Relações", color: "#ec4899" },
+      meta: { label: "Você", color: "#8a90a6" }
+    };
+
+    const NOTES = [
+      { id: "voce-ildemar", area: "meta", title: "Ildemar", body: "Ildemar, 50 anos, nascido em 20/02/1976, advogado, entusiasta de Tecnologia e Inteligência Artificial, mora em Brasília/DF, Brasil." },
+      { id: "metas-ia", area: "metas", title: "IA", body: "Meta de curto prazo: especializar-se em Inteligência Artificial." },
+      { id: "metas-renda", area: "metas", title: "Renda", body: "Meta de longo prazo: aposentar-se e viver de renda." },
+      { id: "trabalho-caixa", area: "trabalho", title: "CAIXA", body: "Empregado da CAIXA Econômica Federal, no cargo de Advogado, atuando com questões de Tecnologia e Jurídico." },
+      { id: "trabalho-juridico-tech", area: "trabalho", title: "Jurídico Tech", body: "Foco atual em implementar soluções tecnológicas para aprimorar a atuação jurídica da CAIXA." },
+      { id: "projetos-pessoal-tech", area: "projetos", title: "Pessoal Tech", body: "Aprender e implementar soluções tecnológicas pessoais." },
+      { id: "projetos-juridico-tech", area: "projetos", title: "Jurídico Tech", body: "Implementar soluções tecnológicas voltadas à área jurídica." },
+      { id: "financas-liberdade", area: "financas", title: "Liberdade", body: "Objetivo financeiro principal: alcançar liberdade financeira." },
+      { id: "aprendizado-ia-aplicada", area: "aprendizado", title: "IA Aplicada", body: "Estuda e quer aprender Tecnologia e Inteligência Artificial aplicadas a finanças e direito." },
+      { id: "saude-saude", area: "saude", title: "Saúde", body: "Não treina atualmente, toma remédio para dormir e está em boas condições de saúde." },
+      { id: "relacoes-camila", area: "relacoes", title: "Camila", body: "Casado com Camila desde 2000." },
+      { id: "relacoes-matheus", area: "relacoes", title: "Matheus", body: "Pai de Matheus, nascido em 20/02/1997, engenheiro eletricista, casado com Amanda." },
+      { id: "relacoes-pedro", area: "relacoes", title: "Pedro", body: "Pai de Pedro, nascido em 06/11/2002, médico, fazendo residência em cirurgia geral na USP Ribeirão Preto, namora Maria Fernanda." },
+      { id: "relacoes-netos", area: "relacoes", title: "Netos", body: "Matheus e Amanda são pais de Miguel e Sofia." }
+    ];
+
+    const REL = [
+      ["voce-ildemar", "metas-ia"], ["voce-ildemar", "trabalho-caixa"], ["voce-ildemar", "relacoes-camila"],
+      ["metas-ia", "trabalho-juridico-tech"], ["metas-ia", "projetos-pessoal-tech"], ["metas-ia", "projetos-juridico-tech"], ["metas-ia", "aprendizado-ia-aplicada"],
+      ["metas-renda", "financas-liberdade"], ["metas-renda", "saude-saude"], ["metas-renda", "relacoes-netos"],
+      ["trabalho-caixa", "trabalho-juridico-tech"], ["trabalho-juridico-tech", "projetos-juridico-tech"], ["trabalho-juridico-tech", "aprendizado-ia-aplicada"],
+      ["projetos-pessoal-tech", "aprendizado-ia-aplicada"], ["projetos-juridico-tech", "aprendizado-ia-aplicada"],
+      ["financas-liberdade", "aprendizado-ia-aplicada"], ["relacoes-camila", "relacoes-matheus"], ["relacoes-camila", "relacoes-pedro"],
+      ["relacoes-matheus", "relacoes-netos"], ["relacoes-matheus", "relacoes-pedro"], ["relacoes-pedro", "relacoes-netos"]
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const els = {
+      boot: $("boot"), activate: $("activate"), activateBtn: $("activateBtn"), app: $("app"),
+      activationApiKey: $("activationApiKey"), activationToggleKey: $("activationToggleKey"),
+      activationTestKey: $("activationTestKey"), activationModelSelect: $("activationModelSelect"), activationKeyState: $("activationKeyState"),
+      status: $("status"), apiKey: $("apiKey"), orb: $("orb"), userLine: $("userLine"),
+      assistantLine: $("assistantLine"), commandInput: $("commandInput"), micBtn: $("micBtn"),
+      stopBtn: $("stopBtn"), voiceSelect: $("voiceSelect"), graph: $("graph"), legend: $("legend"), brainCount: $("brainCount"),
+      toggleKey: $("toggleKey"), testKey: $("testKey"), modelSelect: $("modelSelect"), keyState: $("keyState"),
+      addNote: $("addNote"), reloadNotes: $("reloadNotes"), modal: $("modal"), noteTitle: $("noteTitle"),
+      noteArea: $("noteArea"), noteBody: $("noteBody"), deleteNote: $("deleteNote"),
+      cancelEdit: $("cancelEdit"), saveNote: $("saveNote")
+    };
+
+    let notes = loadNotes();
+    let messages = [];
+    let recognition = null;
+    let listening = false;
+    let busy = false;
+    let speaking = false;
+    let thinking = false;
+    let directConversation = false;
+    let requestSerial = 0;
+    let activeController = null;
+    let currentSpokenNormalized = "";
+    let idleTimer = null;
+    let started = false;
+    let voices = [];
+    let editingId = null;
+    let graphEdges = [];
+    let synapses = [];
+    let flashId = "";
+
+    els.apiKey.value = localStorage.getItem("anthropic_key") || "";
+    els.activationApiKey.value = els.apiKey.value;
+    populateModelSelects();
+    updateKeyState();
+    els.apiKey.addEventListener("input", () => {
+      syncKeyFrom(els.apiKey);
+      updateKeyState();
+    });
+    els.activationApiKey.addEventListener("input", () => {
+      syncKeyFrom(els.activationApiKey);
+      updateKeyState();
+    });
+    els.toggleKey.addEventListener("click", () => toggleKeyVisibility(els.apiKey, els.toggleKey));
+    els.activationToggleKey.addEventListener("click", () => toggleKeyVisibility(els.activationApiKey, els.activationToggleKey));
+    els.testKey.addEventListener("click", () => testApiKey(els.apiKey, els.keyState, els.testKey));
+    els.activationTestKey.addEventListener("click", () => testApiKey(els.activationApiKey, els.activationKeyState, els.activationTestKey));
+    els.modelSelect.addEventListener("change", () => syncModelFrom(els.modelSelect));
+    els.activationModelSelect.addEventListener("change", () => syncModelFrom(els.activationModelSelect));
+    els.voiceSelect.addEventListener("change", () => {
+      localStorage.setItem("jarvis_voice_name", els.voiceSelect.value);
+      const label = els.voiceSelect.selectedOptions[0] ? els.voiceSelect.selectedOptions[0].textContent : "Voz automática";
+      setStatus(`Voz: ${label}`);
+      speak(`Voz configurada, ${CONFIG.address}.`);
+    });
+
+    setTimeout(() => {
+      els.boot.classList.add("hidden");
+      els.activate.classList.add("visible");
+    }, 2200);
+
+    els.activateBtn.addEventListener("click", () => {
+      if (started) return;
+      started = true;
+      directConversation = false;
+      els.activateBtn.textContent = "SISTEMA ONLINE";
+      els.activate.classList.remove("visible");
+      els.activate.classList.add("hidden");
+      els.app.classList.add("ready");
+      setStatus("Sistemas online");
+      startListening();
+      speak(`Sistemas online. Estou ouvindo, ${CONFIG.address}.`, () => {
+        setOrb("listening");
+        setStatus(`Diga "${CONFIG.wakeWord}"`);
+        startListening();
+      });
+    });
+
+    els.orb.addEventListener("click", armManualCommand);
+    els.micBtn.addEventListener("click", armManualCommand);
+    els.stopBtn.addEventListener("click", () => {
+      if (activeController) activeController.abort();
+      speechSynthesis.cancel();
+      busy = false;
+      thinking = false;
+      speaking = false;
+      directConversation = false;
+      clearIdleTimer();
+      setOrb("listening");
+      setStatus(`Diga "${CONFIG.wakeWord}"`);
+      startListening();
+    });
+
+    els.commandInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && els.commandInput.value.trim()) {
+        const value = els.commandInput.value.trim();
+        els.commandInput.value = "";
+        handleCommand(value);
+      }
+    });
+
+    els.addNote.addEventListener("click", () => openEditor({ id: "", area: "meta", title: "", body: "" }));
+    els.reloadNotes.addEventListener("click", () => {
+      notes = loadNotes();
+      renderGraph();
+      setStatus("Second Brain recarregado");
+    });
+    els.cancelEdit.addEventListener("click", closeEditor);
+    els.saveNote.addEventListener("click", saveEditor);
+    els.deleteNote.addEventListener("click", deleteEditor);
+
+    Object.entries(AREA).forEach(([key, area]) => {
+      const option = document.createElement("option");
+      option.value = key;
+      option.textContent = area.label;
+      els.noteArea.appendChild(option);
+    });
+
+    function normalizeText(value) {
+      return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    }
+
+    function loadNotes() {
+      try {
+        const stored = JSON.parse(localStorage.getItem("jarvis_notes") || "null");
+        return Array.isArray(stored) && stored.length ? stored : structuredClone(NOTES);
+      } catch {
+        return structuredClone(NOTES);
+      }
+    }
+
+    function saveNotes() {
+      localStorage.setItem("jarvis_notes", JSON.stringify(notes));
+    }
+
+    function setStatus(text) {
+      els.status.textContent = text;
+    }
+
+    function setOrb(state) {
+      els.orb.className = `orb ${state || ""}`.trim();
+    }
+
+    function armManualCommand() {
+      if (!started) return;
+      openConversationWindow();
+      els.userLine.textContent = "Janela de conversa aberta. Pode falar.";
+      setOrb("listening");
+      startListening();
+    }
+
+    function openConversationWindow() {
+      directConversation = true;
+      clearIdleTimer();
+      setStatus("Conversa aberta por 2s");
+      if (!thinking && !speaking) armIdleTimer();
+    }
+
+    function clearIdleTimer() {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = null;
+    }
+
+    function armIdleTimer() {
+      clearIdleTimer();
+      if (!started || !directConversation || thinking || speaking) return;
+      idleTimer = setTimeout(() => {
+        directConversation = false;
+        setStatus(`Diga "${CONFIG.wakeWord}"`);
+      }, 2000);
+    }
+
+    function updateKeyState() {
+      const hasKey = Boolean(els.apiKey.value.trim());
+      [els.keyState, els.activationKeyState].forEach((state) => {
+        state.textContent = hasKey ? "Chave salva neste navegador." : "Nenhuma chave salva.";
+        state.classList.toggle("saved", hasKey);
+      });
+    }
+
+    function currentModel() {
+      return localStorage.getItem("anthropic_model") || CONFIG.model;
+    }
+
+    function populateModelSelects() {
+      const options = MODELS.map((model) => `<option value="${model.id}">${model.label}</option>`).join("");
+      els.modelSelect.innerHTML = options;
+      els.activationModelSelect.innerHTML = options;
+      const selected = currentModel();
+      els.modelSelect.value = selected;
+      els.activationModelSelect.value = selected;
+    }
+
+    function syncModelFrom(source) {
+      const model = MODELS.some((item) => item.id === source.value) ? source.value : CONFIG.model;
+      localStorage.setItem("anthropic_model", model);
+      els.modelSelect.value = model;
+      els.activationModelSelect.value = model;
+      const label = MODELS.find((item) => item.id === model)?.label || model;
+      setStatus(`Modelo: ${label}`);
+    }
+
+    function syncKeyFrom(source) {
+      const key = source.value.trim();
+      localStorage.setItem("anthropic_key", key);
+      if (source !== els.apiKey) els.apiKey.value = key;
+      if (source !== els.activationApiKey) els.activationApiKey.value = key;
+    }
+
+    function toggleKeyVisibility(input, button) {
+      const visible = input.type === "text";
+      input.type = visible ? "password" : "text";
+      button.textContent = visible ? "Mostrar" : "Ocultar";
+      input.focus();
+    }
+
+    async function testApiKey(input, state, button) {
+      syncKeyFrom(input);
+      const key = input.value.trim();
+      if (!key) {
+        state.textContent = "Cole a chave antes de testar.";
+        state.classList.remove("saved");
+        return;
+      }
+      button.disabled = true;
+      button.textContent = "...";
+      state.textContent = "Testando chave na Anthropic...";
+      state.classList.remove("saved");
+      try {
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": key,
+            "anthropic-version": "2023-06-01",
+            "anthropic-dangerous-direct-browser-access": "true",
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({
+            model: currentModel(),
+            max_tokens: 12,
+            system: "Responda apenas OK.",
+            messages: [{ role: "user", content: "Teste de conexão." }]
+          })
+        });
+        if (response.ok) {
+          localStorage.setItem("anthropic_key", key);
+          state.textContent = "Chave validada e salva.";
+          state.classList.add("saved");
+          setStatus("API key validada");
+        } else {
+          const detail = await readAnthropicError(response);
+          state.textContent = detail.short;
+          setStatus(detail.status);
+          console.warn("Resposta da Anthropic:", detail.raw);
+        }
+      } catch (error) {
+        state.textContent = "Falha de rede ou bloqueio do navegador ao testar.";
+        setStatus("Falha ao testar API key");
+        console.warn(error);
+      } finally {
+        button.disabled = false;
+        button.textContent = "Testar";
+      }
+    }
+
+    async function readAnthropicError(response) {
+      const raw = await response.text();
+      let message = raw;
+      try {
+        const parsed = JSON.parse(raw);
+        message = parsed && parsed.error && parsed.error.message ? parsed.error.message : raw;
+      } catch {}
+      const lower = normalizeText(message);
+      let short = `Não validada: HTTP ${response.status}.`;
+      let status = `Erro HTTP ${response.status}`;
+      if (response.status === 401) {
+        short = "Chave inválida ou não autorizada.";
+        status = "API key inválida";
+      } else if (response.status === 429) {
+        short = "Limite atingido ou sem crédito/saldo disponível.";
+        status = "Limite ou crédito insuficiente";
+      } else if (response.status === 400 && (lower.includes("credit") || lower.includes("balance") || lower.includes("quota"))) {
+        short = "A chave parece válida, mas falta crédito/saldo.";
+        status = "Crédito insuficiente";
+      } else if (response.status === 403) {
+        short = "Chave sem permissão para usar este recurso.";
+        status = "Permissão recusada";
+      }
+      return { short, status, raw };
+    }
+
+    function initRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setStatus("Reconhecimento de voz indisponível neste navegador");
+        return null;
+      }
+      const rec = new SpeechRecognition();
+      rec.lang = "pt-BR";
+      rec.continuous = true;
+      rec.interimResults = false;
+      rec.onstart = () => {
+        listening = true;
+        if (!thinking && !speaking) setOrb("listening");
+        setStatus(directConversation ? "Conversa contínua ativa" : `Diga "${CONFIG.wakeWord}"`);
+      };
+      rec.onresult = (event) => {
+        if (speaking || thinking) return;
+        const result = event.results[event.results.length - 1];
+        if (!result || !result[0]) return;
+        processSpeech(result[0].transcript);
+      };
+      rec.onerror = (event) => {
+        if (event.error === "not-allowed") {
+          const msg = "Permissão do microfone negada. Autorize o microfone no navegador.";
+          setStatus(msg);
+          speak(msg);
+          return;
+        }
+        setStatus(`Voz: ${event.error || "erro"}`);
+      };
+      rec.onend = () => {
+        listening = false;
+        if (started) setTimeout(startListening, 350);
+      };
+      return rec;
+    }
+
+    function startListening() {
+      if (!started) return;
+      if (!recognition) recognition = initRecognition();
+      if (!recognition) return;
+      try {
+        recognition.start();
+      } catch (error) {
+        if (!String(error && error.message || "").toLowerCase().includes("started")) {
+          setStatus("Reconhecimento já ativo");
+        }
+      }
+    }
+
+    function stopListening() {
+      if (!recognition || !listening) return;
+      try { recognition.stop(); } catch {}
+    }
+
+    function processSpeech(raw) {
+      const text = raw.trim();
+      if (!text) return;
+      if (speaking || thinking) return;
+      const normalized = normalizeText(text);
+      if (speaking && isLikelyAssistantEcho(normalized)) return;
+      const wake = findWakeWord(normalized);
+
+      if (directConversation) clearIdleTimer();
+
+      if (directConversation) {
+        handleCommand(text);
+        return;
+      }
+      if (wake.found) {
+        const command = text.slice(Math.min(text.length, wake.index + wake.length)).trim();
+        openConversationWindow();
+        if (command) {
+          clearIdleTimer();
+          handleCommand(command);
+        }
+        else {
+          setStatus("Ativado. Fale em até 2s.");
+          els.userLine.textContent = "Ativado. Pode falar.";
+        }
+        return;
+      }
+      els.userLine.textContent = `Ouvi: "${text}". Aguardando "${CONFIG.wakeWord}" ou clique no microfone.`;
+      setStatus(`Diga "${CONFIG.wakeWord}" ou clique no microfone`);
+    }
+
+    function isLikelyAssistantEcho(normalized) {
+      if (!currentSpokenNormalized || normalized.length < 12) return false;
+      return currentSpokenNormalized.includes(normalized) || normalized.includes(currentSpokenNormalized.slice(0, 48));
+    }
+
+    function findWakeWord(normalized) {
+      const variants = [
+        CONFIG.wakeWord,
+        "jarvis",
+        "ei jarves",
+        "jarves",
+        "ei jardins",
+        "jardins",
+        "ei javis",
+        "javis",
+        "hey jarvis",
+        "ok jarvis"
+      ].map(normalizeText);
+      for (const variant of variants) {
+        const index = normalized.indexOf(variant);
+        if (index >= 0) return { found: true, index, length: variant.length };
+      }
+      return { found: false, index: -1, length: 0 };
+    }
+
+    async function handleCommand(text) {
+      if (!text) return;
+      if (speaking || thinking) return;
+      clearIdleTimer();
+      const mySerial = ++requestSerial;
+      if (activeController) activeController.abort();
+      activeController = new AbortController();
+      busy = true;
+      thinking = true;
+      speaking = false;
+      directConversation = true;
+      setOrb("thinking");
+      setStatus("Pensando");
+      els.userLine.textContent = text;
+
+      const key = els.apiKey.value.trim();
+      if (!key) {
+        finishWithError("Cole sua API KEY da Anthropic no campo superior, Senhor.", mySerial);
+        return;
+      }
+
+      messages.push({ role: "user", content: text });
+      try {
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": key,
+            "anthropic-version": "2023-06-01",
+            "anthropic-dangerous-direct-browser-access": "true",
+            "content-type": "application/json"
+          },
+          signal: activeController.signal,
+          body: JSON.stringify({
+            model: currentModel(),
+            max_tokens: 400,
+            system: buildSystemPrompt(),
+            messages
+          })
+        });
+
+        if (mySerial !== requestSerial) return;
+        activeController = null;
+
+        if (!response.ok) {
+          const detail = await readAnthropicError(response);
+          finishWithError(`${detail.short} Verifique no console da Anthropic, Senhor.`, mySerial);
+          return;
+        }
+
+        const data = await response.json();
+        if (mySerial !== requestSerial) return;
+        let answer = data && data.content && data.content[0] && data.content[0].text ? data.content[0].text : "";
+        if (!answer.trim()) answer = "Recebi uma resposta vazia, Senhor. Podemos tentar novamente.";
+        answer = applyMemorySave(answer);
+        messages.push({ role: "assistant", content: answer });
+        els.assistantLine.textContent = answer;
+        thinking = false;
+        speaking = true;
+        setStatus("Falando");
+        setOrb("speaking");
+        speak(answer, () => {
+          if (mySerial !== requestSerial) return;
+          busy = false;
+          thinking = false;
+          speaking = false;
+          setOrb("listening");
+          setStatus("Responda em até 2s ou diga a ativação novamente");
+          startListening();
+          armIdleTimer();
+        });
+      } catch (error) {
+        if (error && error.name === "AbortError") return;
+        finishWithError("Falha de rede. Não consegui conectar à Anthropic agora.", mySerial);
+      }
+    }
+
+    function finishWithError(message, serial = requestSerial) {
+      clearIdleTimer();
+      els.assistantLine.textContent = message;
+      thinking = false;
+      speaking = true;
+      setStatus("Atenção necessária");
+      setOrb("speaking");
+      startListening();
+      speak(message, () => {
+        if (serial !== requestSerial) return;
+        busy = false;
+        thinking = false;
+        speaking = false;
+        setOrb("listening");
+        setStatus("Responda em até 2s ou diga a ativação novamente");
+        startListening();
+        armIdleTimer();
+      });
+    }
+
+    function loadVoices() {
+      voices = speechSynthesis.getVoices();
+      populateVoiceSelect();
+    }
+
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+
+    function populateVoiceSelect() {
+      const saved = localStorage.getItem("jarvis_voice_name") || "";
+      const current = els.voiceSelect.value || saved;
+      const preferred = voices
+        .filter((voice) => normalizeText(voice.lang).startsWith("pt"))
+        .sort((a, b) => scoreVoice(b) - scoreVoice(a));
+      const list = preferred.length ? preferred : voices;
+      els.voiceSelect.innerHTML = '<option value="">Voz automática</option>' + list.map((voice) => {
+        const name = escapeHtml(voice.name);
+        const lang = escapeHtml(voice.lang);
+        return `<option value="${name}">${name} · ${lang}</option>`;
+      }).join("");
+      if ([...els.voiceSelect.options].some((option) => option.value === current)) {
+        els.voiceSelect.value = current;
+      }
+    }
+
+    function scoreVoice(voice) {
+      const name = normalizeText(`${voice.name} ${voice.voiceURI || ""}`);
+      const lang = normalizeText(voice.lang);
+      let score = 0;
+      if (lang === "pt-br") score += 40;
+      if (lang.startsWith("pt")) score += 20;
+      ["daniel", "ricardo", "felipe", "joao", "bruno", "paulo", "carlos", "antonio", "male", "mascul", "homem"].forEach((hint) => {
+        if (name.includes(hint)) score += 30;
+      });
+      ["luciana", "maria", "leticia", "helena", "female", "fem", "mulher"].forEach((hint) => {
+        if (name.includes(hint)) score -= 35;
+      });
+      return score;
+    }
+
+    function chooseVoice() {
+      const selected = els.voiceSelect.value || localStorage.getItem("jarvis_voice_name") || "";
+      if (selected) {
+        const chosen = voices.find((voice) => voice.name === selected);
+        if (chosen) return chosen;
+      }
+      const pt = voices.filter((voice) => normalizeText(voice.lang).startsWith("pt"));
+      const br = pt.filter((voice) => normalizeText(voice.lang).includes("br"));
+      const candidates = br.length ? br : pt;
+      const masculineHints = ["daniel", "ricardo", "felipe", "joao", "bruno", "paulo", "carlos", "antonio", "male", "mascul", "homem"];
+      const feminineHints = ["luciana", "maria", "female", "fem"];
+      const hints = CONFIG.voiceGender === "feminina" ? feminineHints : masculineHints;
+      return candidates.find((voice) => hints.some((hint) => normalizeText(`${voice.name} ${voice.voiceURI || ""}`).includes(hint))) ||
+        candidates.sort((a, b) => scoreVoice(b) - scoreVoice(a))[0] ||
+        voices.sort((a, b) => scoreVoice(b) - scoreVoice(a))[0] ||
+        null;
+    }
+
+    function speak(text, onend) {
+      speechSynthesis.cancel();
+      currentSpokenNormalized = normalizeText(text);
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "pt-BR";
+      utter.rate = .94;
+      utter.pitch = CONFIG.voiceGender === "feminina" ? 1.08 : .55;
+      const voice = chooseVoice();
+      if (voice) utter.voice = voice;
+      let finished = false;
+      const done = () => {
+        if (finished) return;
+        finished = true;
+        currentSpokenNormalized = "";
+        onend && onend();
+      };
+      const fallbackMs = Math.min(14000, Math.max(1800, text.length * 65));
+      const fallback = setTimeout(done, fallbackMs);
+      utter.onend = () => {
+        clearTimeout(fallback);
+        done();
+      };
+      utter.onerror = () => {
+        clearTimeout(fallback);
+        done();
+      };
+      speechSynthesis.speak(utter);
+    }
+
+    function buildSystemPrompt() {
+      const grouped = Object.keys(AREA).map((areaKey) => {
+        const areaNotes = notes.filter((note) => note.area === areaKey);
+        if (!areaNotes.length) return "";
+        return `${AREA[areaKey].label}:\n${areaNotes.map((note) => `- ${note.title}: ${note.body}`).join("\n")}`;
+      }).filter(Boolean).join("\n\n");
+
+      return [
+        `Você é ${CONFIG.name}, um assistente pessoal com personalidade ${CONFIG.persona}. Trate o usuário como ${CONFIG.address}.`,
+        "Responda sempre em português do Brasil, em tom falado, curto, útil e elegante. Use 2 a 4 frases. Não use emojis nem markdown.",
+        `SECOND BRAIN COMPLETO:\n${grouped}`,
+        "Memória viva: Se o usuário revelar algo novo e duradouro, TERMINE a resposta com uma linha no formato EXATO [[SAVE:area|titulo|texto]] (area ∈ metas, trabalho, projetos, financas, aprendizado, saude, relacoes, meta). Se já existir nota com esse título, ela é atualizada; senão nasce uma nova. Inclua só quando houver algo realmente novo."
+      ].join("\n\n");
+    }
+
+    function applyMemorySave(answer) {
+      const regex = /\[\[SAVE:([a-z_]+)\|([^|]+)\|([\s\S]+?)\]\]/;
+      const match = answer.match(regex);
+      if (!match) return answer.trim();
+      const area = AREA[match[1]] ? match[1] : "meta";
+      const title = match[2].trim().slice(0, 42);
+      const body = match[3].trim();
+      const existing = notes.find((note) => normalizeText(note.title) === normalizeText(title));
+      if (existing) {
+        existing.area = area;
+        existing.body = body;
+        flashId = existing.id;
+      } else {
+        const id = `${area}-${normalizeText(title).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || Date.now()}`;
+        notes.push({ id, area, title, body });
+        REL.push(["metas-ia", id]);
+        flashId = id;
+      }
+      saveNotes();
+      renderGraph();
+      return answer.replace(regex, "").trim();
+    }
+
+    function renderGraph() {
+      const width = 1000;
+      const height = 540;
+      const cx = width / 2;
+      const cy = 238;
+      const rx = 390;
+      const ry = 165;
+      const visibleRels = REL.filter(([a, b]) => notes.some((n) => n.id === a) && notes.some((n) => n.id === b));
+      const degree = {};
+      notes.forEach((note) => degree[note.id] = 0);
+      visibleRels.forEach(([a, b]) => { degree[a]++; degree[b]++; });
+
+      const points = notes.map((note, index) => {
+        const angle = -Math.PI / 2 + (Math.PI * 2 * index / Math.max(notes.length, 1));
+        return {
+          ...note,
+          x: cx + Math.cos(angle) * rx,
+          y: cy + Math.sin(angle) * ry,
+          r: 18 + Math.min(14, degree[note.id] * 2.2)
+        };
+      });
+
+      const byId = Object.fromEntries(points.map((point) => [point.id, point]));
+      graphEdges = visibleRels.map(([a, b]) => {
+        const A = byId[a];
+        const B = byId[b];
+        const C = { x: (A.x + B.x) / 2 + (cx - (A.x + B.x) / 2) * .35, y: (A.y + B.y) / 2 + (cy - (A.y + B.y) / 2) * .35 };
+        return { A, B, C };
+      });
+
+      const defs = `
+        <defs>
+          <linearGradient id="edgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#8b7cff"/><stop offset="100%" stop-color="#2dd4ff"/>
+          </linearGradient>
+          <radialGradient id="coreGrad"><stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#8b7cff"/><stop offset="100%" stop-color="#3b1e89"/></radialGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>`;
+
+      const edges = graphEdges.map(({ A, B, C }) =>
+        `<path class="edge" d="M ${A.x.toFixed(1)} ${A.y.toFixed(1)} Q ${C.x.toFixed(1)} ${C.y.toFixed(1)} ${B.x.toFixed(1)} ${B.y.toFixed(1)}" fill="none" stroke="url(#edgeGrad)" stroke-width="1.6" opacity=".48"/>`
+      ).join("");
+
+      const rays = points.map((point) =>
+        `<line x1="${cx}" y1="${cy}" x2="${point.x.toFixed(1)}" y2="${point.y.toFixed(1)}" stroke="${AREA[point.area].color}" stroke-width="1" opacity=".22"/>`
+      ).join("");
+
+      const nodes = points.map((point) => {
+        const area = AREA[point.area] || AREA.meta;
+        const safeTitle = escapeHtml(point.title);
+        const safeArea = escapeHtml(area.label);
+        const fontSize = point.title.length > 13 ? 18 : 20;
+        const flash = point.id === flashId ? " flash" : "";
+        return `<g class="node-group${flash}" data-id="${point.id}" tabindex="0" role="button" aria-label="${safeTitle}">
+          <circle class="node-breathe" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${(point.r + 12).toFixed(1)}" fill="${area.color}" opacity=".18"/>
+          <circle class="node-main" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${point.r.toFixed(1)}" fill="${area.color}" filter="url(#glow)" opacity=".9"/>
+          <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${(point.r * .42).toFixed(1)}" fill="#ffffff" opacity=".55"/>
+          <text x="${point.x.toFixed(1)}" y="${(point.y + point.r + 23).toFixed(1)}" text-anchor="middle" fill="#e8f7ff" font-size="${fontSize}" font-family="system-ui, sans-serif">${safeTitle}</text>
+          <text x="${point.x.toFixed(1)}" y="${(point.y + point.r + 42).toFixed(1)}" text-anchor="middle" fill="#8a9bb0" font-size="13" font-family="system-ui, sans-serif">${safeArea}</text>
+        </g>`;
+      }).join("");
+
+      const synapseDots = Array.from({ length: 12 }, (_, i) => `<circle id="synapse-${i}" r="4" fill="#ffffff" opacity="0" filter="url(#glow)"/>`).join("");
+      const core = `
+        <g>
+          <circle class="core-pulse" cx="${cx}" cy="${cy}" r="58" fill="url(#coreGrad)" filter="url(#glow)" opacity=".95"/>
+          <circle cx="${cx}" cy="${cy}" r="78" fill="none" stroke="#8b7cff" stroke-width="1.5" opacity=".38"/>
+          <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="44">🧠</text>
+        </g>`;
+
+      els.graph.innerHTML = `<svg viewBox="0 0 1000 540" xmlns="http://www.w3.org/2000/svg">${defs}<rect width="1000" height="540" fill="transparent"/>${edges}${rays}${core}${nodes}${synapseDots}</svg>`;
+      els.graph.querySelectorAll(".node-group").forEach((node) => node.addEventListener("click", () => openEditor(notes.find((note) => note.id === node.dataset.id))));
+      const areas = new Set(notes.map((note) => note.area));
+      els.brainCount.textContent = `${notes.length} notas · ${areas.size} áreas`;
+      els.legend.innerHTML = Array.from(areas).map((areaKey) => `<span class="legend-item"><span class="swatch" style="background:${AREA[areaKey].color};color:${AREA[areaKey].color}"></span>${AREA[areaKey].label}</span>`).join("") + `<span class="injected">✓ contexto injetado em todos os comandos do ${CONFIG.name}</span>`;
+      resetSynapses();
+      setTimeout(() => { flashId = ""; }, 3400);
+    }
+
+    function resetSynapses() {
+      synapses = Array.from({ length: 12 }, (_, i) => ({
+        id: `synapse-${i}`,
+        edge: graphEdges.length ? Math.floor(Math.random() * graphEdges.length) : 0,
+        t: Math.random(),
+        speed: .003 + Math.random() * .005
+      }));
+    }
+
+    function animateSynapses() {
+      const svg = els.graph.querySelector("svg");
+      if (svg && graphEdges.length) {
+        synapses.forEach((pulse) => {
+          const edge = graphEdges[pulse.edge % graphEdges.length];
+          pulse.t += pulse.speed;
+          if (pulse.t > 1) {
+            pulse.t = 0;
+            pulse.edge = Math.floor(Math.random() * graphEdges.length);
+          }
+          const t = pulse.t;
+          const x = Math.pow(1 - t, 2) * edge.A.x + 2 * (1 - t) * t * edge.C.x + Math.pow(t, 2) * edge.B.x;
+          const y = Math.pow(1 - t, 2) * edge.A.y + 2 * (1 - t) * t * edge.C.y + Math.pow(t, 2) * edge.B.y;
+          const opacity = Math.sin(Math.PI * t);
+          const dot = svg.querySelector(`#${pulse.id}`);
+          if (dot) {
+            dot.setAttribute("cx", x.toFixed(1));
+            dot.setAttribute("cy", y.toFixed(1));
+            dot.setAttribute("opacity", (.15 + opacity * .85).toFixed(2));
+          }
+        });
+      }
+      requestAnimationFrame(animateSynapses);
+    }
+
+    function openEditor(note) {
+      editingId = note && note.id ? note.id : null;
+      els.noteTitle.value = note ? note.title : "";
+      els.noteArea.value = note ? note.area : "meta";
+      els.noteBody.value = note ? note.body : "";
+      els.deleteNote.style.display = editingId ? "" : "none";
+      els.modal.classList.add("open");
+    }
+
+    function closeEditor() {
+      els.modal.classList.remove("open");
+      editingId = null;
+    }
+
+    function saveEditor() {
+      const title = els.noteTitle.value.trim() || "Nota";
+      const area = AREA[els.noteArea.value] ? els.noteArea.value : "meta";
+      const body = els.noteBody.value.trim();
+      if (editingId) {
+        const note = notes.find((item) => item.id === editingId);
+        if (note) Object.assign(note, { title, area, body });
+        flashId = editingId;
+      } else {
+        const id = `${area}-${normalizeText(title).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${Date.now().toString(36)}`;
+        notes.push({ id, area, title, body });
+        REL.push(["metas-ia", id]);
+        flashId = id;
+      }
+      saveNotes();
+      renderGraph();
+      closeEditor();
+    }
+
+    function deleteEditor() {
+      if (!editingId) return;
+      notes = notes.filter((note) => note.id !== editingId);
+      saveNotes();
+      renderGraph();
+      closeEditor();
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+    }
+
+    renderGraph();
+    animateSynapses();
+  </script>
+</body>
+</html>
