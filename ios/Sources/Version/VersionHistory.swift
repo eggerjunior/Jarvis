@@ -10,11 +10,22 @@ struct VersionEntry: Identifiable, Hashable {
 }
 
 enum VersionHistory {
-    static let currentVersionFallback = "1.2.2"
-    static let currentBuildFallback = "8"
+    static let currentVersionFallback = "1.3.0"
+    static let currentBuildFallback = "9"
     static let currentCommitFallback = "dev"
 
     static let entries: [VersionEntry] = [
+        VersionEntry(
+            version: "1.3.0",
+            build: "9",
+            date: "12/07/2026",
+            changes: [
+                "Adicionado Widget Extension do Jarvis com widget de status rápido.",
+                "Preparada base de Live Activity e Dynamic Island para sessões do assistente.",
+                "Criado Bundle ID da extensão de widgets na Apple Developer."
+            ],
+            isCurrent: true
+        ),
         VersionEntry(
             version: "1.2.2",
             build: "8",
@@ -23,7 +34,7 @@ enum VersionHistory {
                 "Adicionado gasto da organização (mês atual) ao resultado do Testar modelo, via Admin API.",
                 "Deixado explícito que a Anthropic não expõe saldo restante nem gasto por chave individual."
             ],
-            isCurrent: true
+            isCurrent: false
         ),
         VersionEntry(
             version: "1.2.1",

@@ -7,8 +7,8 @@ options:
   xcodeVersion: "16"
 settings:
   base:
-    MARKETING_VERSION: "1.2.2"
-    CURRENT_PROJECT_VERSION: "8"
+    MARKETING_VERSION: "1.3.0"
+    CURRENT_PROJECT_VERSION: "9"
     SWIFT_VERSION: "5.10"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: E743636TCJ
@@ -19,6 +19,7 @@ targets:
     platform: iOS
     sources:
       - path: Sources
+      - path: Shared
     info:
       path: Sources/Info.plist
       properties:
@@ -26,6 +27,7 @@ targets:
         UILaunchScreen: {}
         NSMicrophoneUsageDescription: "Para conversar por voz com o Jarvis."
         NSSpeechRecognitionUsageDescription: "Para transcrever seus comandos de voz."
+        NSSupportsLiveActivities: true
         ITSAppUsesNonExemptEncryption: false
         GitCommit: "$(GIT_COMMIT)"
         UISupportedInterfaceOrientations:
@@ -38,3 +40,23 @@ targets:
       PRODUCT_BUNDLE_IDENTIFIER: br.app.egger.jarvis
       INFOPLIST_FILE: Sources/Info.plist
       TARGETED_DEVICE_FAMILY: "1"
+    dependencies:
+      - target: JarvisWidgets
+        embed: true
+  JarvisWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widgets
+      - path: Shared
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: Jarvis
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: br.app.egger.jarvis.widgets
+      INFOPLIST_FILE: Widgets/Info.plist

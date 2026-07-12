@@ -1,0 +1,72 @@
+{
+  "schema": "project-handoff-docs/v1",
+  "generated_at": "2026-07-12T11:12:41-03:00",
+  "project": {
+    "name": "Jarvis@apvictorio",
+    "root": "/Users/ildemareggerjunior/Projects/Jarvis@apvictorio",
+    "stack": [
+      "swift",
+      "node"
+    ]
+  },
+  "git": {
+    "branch": "main",
+    "commit": "fab17281",
+    "status": "M ios/Jarvis.xcodeproj/project.pbxproj\n M ios/Sources/Info.plist\n M ios/project.yml\n?? ios/Shared/\n?? ios/Sources/App/JarvisLiveActivityController.swift\n?? ios/Widgets/",
+    "remote": "https://github.com/eggerjunior/Jarvis.git",
+    "latest_commits": [
+      "fab1728 Move web settings into a modal and add org spend to model test",
+      "94438ad Show organization spend in model test result via Admin API",
+      "efeb0b6 Move API key/model/test/voice into a settings sheet on iOS",
+      "e8af9b3 Update Jarvis web versioning and model test",
+      "9011f46 Add Anthropic model test"
+    ],
+    "latest_tags": []
+  },
+  "version": {
+    "ios_marketing_version": "1.3.0",
+    "ios_current_project_version": "9",
+    "ios_bundle_id": "br.app.egger.jarvis",
+    "widget_bundle_id": "br.app.egger.jarvis.widgets",
+    "widget_bundle_resource_id": "Z7SGYGS278",
+    "package_name": "jarvis-web"
+  },
+  "documentation": [
+    "docs/development-handoff/README.md",
+    "docs/development-handoff/PROJECT_CONTEXT.md",
+    "docs/development-handoff/RELEASE_LOG.md",
+    "docs/development-handoff/SCREENSHOTS.md",
+    "docs/development-handoff/IMPORT_MANIFEST.json"
+  ],
+  "key_files": [
+    "ios/project.yml",
+    "ios/Sources/App/JarvisApp.swift",
+    "ios/Sources/App/RootView.swift",
+    "ios/Sources/App/JarvisLiveActivityController.swift",
+    "ios/Shared/JarvisLiveActivityAttributes.swift",
+    "ios/Widgets/JarvisWidgets.swift",
+    "ios/Sources/Info.plist",
+    "ios/Sources/Version/VersionHistory.swift",
+    "package.json",
+    "scripts/build-web.sh"
+  ],
+  "screenshots": [],
+  "import_order": [
+    "docs/development-handoff/README.md",
+    "docs/development-handoff/PROJECT_CONTEXT.md",
+    "docs/development-handoff/RELEASE_LOG.md",
+    "docs/development-handoff/IMPORT_MANIFEST.json"
+  ],
+  "do_not_read_or_commit": [
+    ".env",
+    ".env.*",
+    "**/asc.env",
+    "*.p8",
+    "DerivedData/",
+    "*.xcarchive",
+    "*.ipa",
+    "node_modules/",
+    "build/",
+    "dist/"
+  ]
+}
