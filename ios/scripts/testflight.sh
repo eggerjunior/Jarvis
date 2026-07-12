@@ -30,6 +30,32 @@ VERSION="$(printf '%s\n' "$SETTINGS" | awk -F' = ' '/ MARKETING_VERSION = /{prin
 BUILD="$(printf '%s\n' "$SETTINGS" | awk -F' = ' '/ CURRENT_PROJECT_VERSION = /{print $2; exit}')"
 GIT_COMMIT="$(git rev-parse --short=8 HEAD 2>/dev/null || echo dev)"
 
+CURRENT_HISTORY="$(awk '
+  /VersionEntry\(/ { in_entry=1; version=""; build=""; current="" }
+  in_entry && /version:/ {
+    if (match($0, /version: "([^"]+)"/)) version=substr($0, RSTART + 10, RLENGTH - 11)
+  }
+  in_entry && /build:/ {
+    if (match($0, /build: "([^"]+)"/)) build=substr($0, RSTART + 8, RLENGTH - 9)
+  }
+  in_entry && /isCurrent: true/ {
+    print version "|" build
+    exit
+  }
+' Sources/Version/VersionHistory.swift)"
+
+if [[ "$CURRENT_HISTORY" != "${VERSION}|${BUILD}" ]]; then
+  echo "ERRO: VersionHistory atual (${CURRENT_HISTORY:-não encontrado}) não confere com project.yml (${VERSION}|${BUILD})." >&2
+  echo "      Atualize VersionHistory.swift antes de enviar ao TestFlight." >&2
+  exit 1
+fi
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "ERRO: há mudanças não commitadas. Faça commit + push antes do build de distribuição." >&2
+  git status --short >&2
+  exit 1
+fi
+
 echo "==> Enviando ${SCHEME} ${VERSION} (${BUILD}) — commit ${GIT_COMMIT}"
 
 ARCH_DIR="$HOME/Library/Developer/Xcode/Archives/$(date +%Y-%m-%d)"

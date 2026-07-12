@@ -10,11 +10,22 @@ struct VersionEntry: Identifiable, Hashable {
 }
 
 enum VersionHistory {
-    static let currentVersionFallback = "1.0.0"
-    static let currentBuildFallback = "3"
+    static let currentVersionFallback = "1.1.0"
+    static let currentBuildFallback = "4"
     static let currentCommitFallback = "dev"
 
     static let entries: [VersionEntry] = [
+        VersionEntry(
+            version: "1.1.0",
+            build: "4",
+            date: "11/07/2026",
+            changes: [
+                "Corrigido versionamento semver para releases distribuídos.",
+                "Adicionada validação de release para impedir TestFlight com versão e changelog desalinhados.",
+                "Mantida rastreabilidade por build e commit git."
+            ],
+            isCurrent: true
+        ),
         VersionEntry(
             version: "1.0.0",
             build: "3",
@@ -23,7 +34,7 @@ enum VersionHistory {
                 "Projeto colocado sob versionamento git privado.",
                 "Aplicado padrão app-versioning com rastreabilidade por commit antes do build distribuído."
             ],
-            isCurrent: true
+            isCurrent: false
         ),
         VersionEntry(
             version: "1.0.0",

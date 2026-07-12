@@ -20,7 +20,7 @@ final class VersionManager {
 
     var commitURL: URL? {
         guard currentCommit != "dev" else { return nil }
-        return URL(string: "https://github.com/eggerjunior/jarvis/commit/\(currentCommit)")
+        return URL(string: "https://github.com/eggerjunior/Jarvis/commit/\(currentCommit)")
     }
 
     var currentBuildDateString: String {
