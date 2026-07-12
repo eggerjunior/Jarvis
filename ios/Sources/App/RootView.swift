@@ -5,6 +5,7 @@ struct RootView: View {
     @State private var typedCommand = ""
     @State private var showKey = false
     @State private var showingVersionHistory = false
+    @State private var showingSettings = false
 
     var body: some View {
         ZStack {
@@ -26,103 +27,130 @@ struct RootView: View {
         .sheet(isPresented: $showingVersionHistory) {
             VersionHistoryView()
         }
+        .sheet(isPresented: $showingSettings) {
+            settingsSheet
+        }
     }
 
     private var topPanel: some View {
-        VStack(spacing: 12) {
-            HStack {
-                statusPill
-                Spacer()
-                Button(session.isActivated ? "Parar" : "Ativar") {
-                    session.isActivated ? session.stop() : session.start()
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(session.isActivated ? .red : .cyan)
+        HStack {
+            statusPill
+            Spacer()
+            Button {
+                showingSettings = true
+            } label: {
+                Image(systemName: "gearshape.fill")
             }
+            .buttonStyle(.bordered)
+            .tint(.cyan)
 
-            HStack(spacing: 10) {
-                Text("API KEY")
-                    .font(.system(.caption, design: .monospaced).weight(.bold))
-                    .foregroundStyle(.cyan)
-                Group {
-                    if showKey {
-                        TextField("Anthropic API key", text: $session.apiKey)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                    } else {
-                        SecureField("Anthropic API key", text: $session.apiKey)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                    }
-                }
-                .font(.system(.body, design: .monospaced))
-                Button(showKey ? "Ocultar" : "Mostrar") {
-                    showKey.toggle()
-                }
-                .buttonStyle(.bordered)
+            Button(session.isActivated ? "Parar" : "Ativar") {
+                session.isActivated ? session.stop() : session.start()
             }
-            .padding(12)
-            .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.cyan.opacity(0.35)))
-
-            HStack(spacing: 10) {
-                Text("MODELO")
-                    .font(.system(.caption, design: .monospaced).weight(.bold))
-                    .foregroundStyle(.cyan)
-                Picker("Modelo", selection: $session.selectedModel) {
-                    ForEach(JarvisSession.availableModels) { model in
-                        Text("\(model.label) · \(model.price)").tag(model.id)
-                    }
-                }
-                .pickerStyle(.menu)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(12)
-            .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.cyan.opacity(0.35)))
-
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 10) {
-                    Text("TESTE")
-                        .font(.system(.caption, design: .monospaced).weight(.bold))
-                        .foregroundStyle(.cyan)
-                    Text(selectedModelDescription)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Button(session.isTestingModel ? "Testando" : "Testar modelo") {
-                        session.testSelectedModel()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.cyan)
-                    .disabled(session.isTestingModel)
-                }
-
-                Text(session.modelTestLine)
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .textSelection(.enabled)
-            }
-            .padding(12)
-            .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.cyan.opacity(0.35)))
-
-            HStack(spacing: 10) {
-                Text("VOZ")
-                    .font(.system(.caption, design: .monospaced).weight(.bold))
-                    .foregroundStyle(.cyan)
-                Picker("Voz", selection: $session.selectedVoicePreference) {
-                    ForEach(JarvisVoicePreference.allCases) { voice in
-                        Text(voice.label).tag(voice)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-            .padding(12)
-            .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.cyan.opacity(0.35)))
+            .buttonStyle(.borderedProminent)
+            .tint(session.isActivated ? .red : .cyan)
         }
+    }
+
+    private var settingsSheet: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 12) {
+                    HStack(spacing: 10) {
+                        Text("API KEY")
+                            .font(.system(.caption, design: .monospaced).weight(.bold))
+                            .foregroundStyle(.cyan)
+                        Group {
+                            if showKey {
+                                TextField("Anthropic API key", text: $session.apiKey)
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled()
+                            } else {
+                                SecureField("Anthropic API key", text: $session.apiKey)
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled()
+                            }
+                        }
+                        .font(.system(.body, design: .monospaced))
+                        Button(showKey ? "Ocultar" : "Mostrar") {
+                            showKey.toggle()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding(12)
+                    .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.cyan.opacity(0.35)))
+
+                    HStack(spacing: 10) {
+                        Text("MODELO")
+                            .font(.system(.caption, design: .monospaced).weight(.bold))
+                            .foregroundStyle(.cyan)
+                        Picker("Modelo", selection: $session.selectedModel) {
+                            ForEach(JarvisSession.availableModels) { model in
+                                Text("\(model.label) · \(model.price)").tag(model.id)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(12)
+                    .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.cyan.opacity(0.35)))
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 10) {
+                            Text("TESTE")
+                                .font(.system(.caption, design: .monospaced).weight(.bold))
+                                .foregroundStyle(.cyan)
+                            Text(selectedModelDescription)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button(session.isTestingModel ? "Testando" : "Testar modelo") {
+                                session.testSelectedModel()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.cyan)
+                            .disabled(session.isTestingModel)
+                        }
+
+                        Text(session.modelTestLine)
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .textSelection(.enabled)
+                    }
+                    .padding(12)
+                    .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.cyan.opacity(0.35)))
+
+                    HStack(spacing: 10) {
+                        Text("VOZ")
+                            .font(.system(.caption, design: .monospaced).weight(.bold))
+                            .foregroundStyle(.cyan)
+                        Picker("Voz", selection: $session.selectedVoicePreference) {
+                            ForEach(JarvisVoicePreference.allCases) { voice in
+                                Text(voice.label).tag(voice)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    .padding(12)
+                    .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.cyan.opacity(0.35)))
+                }
+                .padding(18)
+            }
+            .background(LinearGradient(colors: [Color.black, Color(red: 0.02, green: 0.09, blue: 0.13), Color.black], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea())
+            .navigationTitle("Configurações")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Concluir") { showingSettings = false }
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
     }
 
     private var statusPill: some View {
