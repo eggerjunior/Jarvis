@@ -30,6 +30,12 @@ final class JarvisSession: ObservableObject {
     @Published var selectedModel: String = UserDefaults.standard.string(forKey: "anthropic_model") ?? "claude-sonnet-5" {
         didSet { UserDefaults.standard.set(selectedModel, forKey: "anthropic_model") }
     }
+    @Published var selectedVoicePreference: JarvisVoicePreference = JarvisVoicePreference(rawValue: UserDefaults.standard.string(forKey: "jarvis_voice_preference") ?? "") ?? .masculine {
+        didSet {
+            UserDefaults.standard.set(selectedVoicePreference.rawValue, forKey: "jarvis_voice_preference")
+            speaker.voicePreference = selectedVoicePreference
+        }
+    }
     @Published var userLine = "Diga “Ei Jarvis”."
     @Published var assistantLine = "Sistemas prontos."
     @Published var notes: [BrainNote] = JarvisSession.loadNotes()
@@ -48,6 +54,7 @@ final class JarvisSession: ObservableObject {
     init() {
         recognizer.delegate = self
         speaker.delegate = self
+        speaker.voicePreference = selectedVoicePreference
     }
 
     func start() {
