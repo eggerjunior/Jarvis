@@ -12,12 +12,26 @@ struct AnthropicRequest: Codable {
     let messages: [ClaudeMessage]
 }
 
+struct AnthropicResult {
+    let text: String
+    let requestedModel: String
+    let responseModel: String
+    let inputTokens: Int?
+    let outputTokens: Int?
+}
+
 struct AnthropicResponse: Codable {
     struct Content: Codable {
         let type: String?
         let text: String?
     }
+    struct Usage: Codable {
+        let input_tokens: Int?
+        let output_tokens: Int?
+    }
+    let model: String?
     let content: [Content]
+    let usage: Usage?
 }
 
 struct AnthropicErrorResponse: Codable {
@@ -30,6 +44,20 @@ struct AnthropicErrorResponse: Codable {
 
 final class AnthropicClient {
     func send(apiKey: String, model: String, system: String, messages: [ClaudeMessage]) async throws -> String {
+        try await sendDetailed(apiKey: apiKey, model: model, system: system, messages: messages, maxTokens: 400).text
+    }
+
+    func testModel(apiKey: String, model: String) async throws -> AnthropicResult {
+        try await sendDetailed(
+            apiKey: apiKey,
+            model: model,
+            system: "Responda apenas: teste ok.",
+            messages: [.init(role: "user", content: "Teste de conectividade. Qual modelo recebeu esta requisição?")],
+            maxTokens: 80
+        )
+    }
+
+    private func sendDetailed(apiKey: String, model: String, system: String, messages: [ClaudeMessage], maxTokens: Int) async throws -> AnthropicResult {
         guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
             throw NSError(domain: "Jarvis", code: -1, userInfo: [NSLocalizedDescriptionKey: "URL da Anthropic inválida."])
         }
@@ -41,7 +69,7 @@ final class AnthropicClient {
         request.setValue("application/json", forHTTPHeaderField: "content-type")
         request.httpBody = try JSONEncoder().encode(AnthropicRequest(
             model: model,
-            max_tokens: 400,
+            max_tokens: maxTokens,
             system: system,
             messages: messages
         ))
@@ -58,6 +86,13 @@ final class AnthropicClient {
         }
 
         let decoded = try JSONDecoder().decode(AnthropicResponse.self, from: data)
-        return decoded.content.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Recebi uma resposta vazia, Senhor."
+        let text = decoded.content.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Recebi uma resposta vazia, Senhor."
+        return AnthropicResult(
+            text: text,
+            requestedModel: model,
+            responseModel: decoded.model ?? model,
+            inputTokens: decoded.usage?.input_tokens,
+            outputTokens: decoded.usage?.output_tokens
+        )
     }
 }

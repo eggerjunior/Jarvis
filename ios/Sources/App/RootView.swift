@@ -71,11 +71,38 @@ struct RootView: View {
                     .foregroundStyle(.cyan)
                 Picker("Modelo", selection: $session.selectedModel) {
                     ForEach(JarvisSession.availableModels) { model in
-                        Text(model.label).tag(model.id)
+                        Text("\(model.label) · \(model.price)").tag(model.id)
                     }
                 }
                 .pickerStyle(.menu)
                 .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(12)
+            .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.cyan.opacity(0.35)))
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 10) {
+                    Text("TESTE")
+                        .font(.system(.caption, design: .monospaced).weight(.bold))
+                        .foregroundStyle(.cyan)
+                    Text(selectedModelDescription)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button(session.isTestingModel ? "Testando" : "Testar modelo") {
+                        session.testSelectedModel()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.cyan)
+                    .disabled(session.isTestingModel)
+                }
+
+                Text(session.modelTestLine)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled)
             }
             .padding(12)
             .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
@@ -111,6 +138,13 @@ struct RootView: View {
         .padding(.vertical, 8)
         .background(.cyan.opacity(0.08), in: Capsule())
         .overlay(Capsule().stroke(.cyan.opacity(0.25)))
+    }
+
+    private var selectedModelDescription: String {
+        guard let model = JarvisSession.availableModels.first(where: { $0.id == session.selectedModel }) else {
+            return session.selectedModel
+        }
+        return "\(model.label) · \(model.note)"
     }
 
     private var statusColor: Color {

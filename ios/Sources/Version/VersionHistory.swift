@@ -10,11 +10,22 @@ struct VersionEntry: Identifiable, Hashable {
 }
 
 enum VersionHistory {
-    static let currentVersionFallback = "1.1.1"
-    static let currentBuildFallback = "5"
+    static let currentVersionFallback = "1.2.0"
+    static let currentBuildFallback = "6"
     static let currentCommitFallback = "dev"
 
     static let entries: [VersionEntry] = [
+        VersionEntry(
+            version: "1.2.0",
+            build: "6",
+            date: "12/07/2026",
+            changes: [
+                "Adicionado botão Testar modelo para confirmar o modelo efetivamente usado pela API Anthropic.",
+                "Exibido o modelo solicitado, o modelo retornado pela API, consumo de tokens e retorno do teste.",
+                "Atualizado seletor de modelos com indicação de custo relativo."
+            ],
+            isCurrent: true
+        ),
         VersionEntry(
             version: "1.1.1",
             build: "5",
@@ -23,7 +34,7 @@ enum VersionHistory {
                 "Adicionado ajuste de voz com opções Masculina, Automática e Feminina.",
                 "Voz padrão alterada para Masculina, com fallback seguro para português quando indisponível."
             ],
-            isCurrent: true
+            isCurrent: false
         ),
         VersionEntry(
             version: "1.1.0",

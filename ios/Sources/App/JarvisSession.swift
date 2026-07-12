@@ -6,13 +6,15 @@ final class JarvisSession: ObservableObject {
     struct ClaudeModel: Identifiable, Hashable {
         let id: String
         let label: String
+        let price: String
+        let note: String
     }
 
     static let availableModels: [ClaudeModel] = [
-        .init(id: "claude-sonnet-5", label: "Claude Sonnet 5"),
-        .init(id: "claude-opus-4-8", label: "Claude Opus 4.8"),
-        .init(id: "claude-fable-5", label: "Claude Fable 5"),
-        .init(id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5")
+        .init(id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5", price: "$1/$5 por MTok", note: "Mais barato e mais rápido"),
+        .init(id: "claude-sonnet-5", label: "Claude Sonnet 5", price: "$2/$10 até 31/08/2026", note: "Equilíbrio custo/inteligência"),
+        .init(id: "claude-opus-4-8", label: "Claude Opus 4.8", price: "$5/$25 por MTok", note: "Trabalho complexo"),
+        .init(id: "claude-fable-5", label: "Claude Fable 5", price: "$10/$50 por MTok", note: "Mais capaz e mais caro")
     ]
 
     enum State: String {
@@ -38,6 +40,8 @@ final class JarvisSession: ObservableObject {
     }
     @Published var userLine = "Diga “Ei Jarvis”."
     @Published var assistantLine = "Sistemas prontos."
+    @Published var modelTestLine = "Modelo ainda não testado."
+    @Published var isTestingModel = false
     @Published var notes: [BrainNote] = JarvisSession.loadNotes()
     @Published var isActivated = false
     @Published var permissionsGranted = false
@@ -87,6 +91,28 @@ final class JarvisSession: ObservableObject {
         guard !trimmed.isEmpty else { return }
         openConversationWindow()
         handleCommand(trimmed)
+    }
+
+    func testSelectedModel() {
+        guard !isTestingModel else { return }
+        guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            modelTestLine = "Cole a API key antes de testar o modelo."
+            return
+        }
+
+        isTestingModel = true
+        modelTestLine = "Testando \(selectedModel)..."
+
+        Task {
+            defer { isTestingModel = false }
+            do {
+                let result = try await client.testModel(apiKey: apiKey, model: selectedModel)
+                let usage = tokenSummary(input: result.inputTokens, output: result.outputTokens)
+                modelTestLine = "Pedido: \(result.requestedModel)\nResposta API: \(result.responseModel)\nTokens: \(usage)\nRetorno: \(result.text)"
+            } catch {
+                modelTestLine = "Falha no teste: \(classify(error))"
+            }
+        }
     }
 
     private func restartListening() {
@@ -241,6 +267,12 @@ final class JarvisSession: ObservableObject {
             return "A chave parece válida, mas falta crédito ou saldo na Anthropic, Senhor."
         }
         return "Não consegui conectar à Anthropic agora, Senhor."
+    }
+
+    private func tokenSummary(input: Int?, output: Int?) -> String {
+        let inputText = input.map(String.init) ?? "n/d"
+        let outputText = output.map(String.init) ?? "n/d"
+        return "\(inputText) entrada / \(outputText) saída"
     }
 
     private func saveNotes() {
