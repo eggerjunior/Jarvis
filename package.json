@@ -1,8 +1,8 @@
 {
   "name": "jarvis-web",
   "private": true,
-  "version": "1.2.0",
-  "buildNumber": 6,
+  "version": "1.2.1",
+  "buildNumber": 7,
   "scripts": {
     "build:web": "bash scripts/build-web.sh"
   }
