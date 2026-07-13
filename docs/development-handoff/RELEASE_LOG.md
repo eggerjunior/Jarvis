@@ -10,6 +10,7 @@ Record every deploy, TestFlight/App Store upload, web publish and external proce
 - Bundle id: `br.app.egger.jarvis`
 - Widget extension bundle id: `br.app.egger.jarvis.widgets`
 - Version/build: `1.4.0` / `10`
+- Binary commit: `648f0c94`
 - Source feedback: TestFlight feedback zips `testflight_feedback-2.zip` through `testflight_feedback-6.zip`.
 - Changes:
   - Removed cost/spend lookup from the model test result.
@@ -21,7 +22,9 @@ Record every deploy, TestFlight/App Store upload, web publish and external proce
   - `cd ios && xcodegen generate` succeeded.
   - `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataFeedback build` succeeded.
   - Installed and launched on iPhone 17 iOS 26.5 Simulator and captured `ios-simulator-feedback-adjustments-2026-07-13.png`.
-- Status: implementation validated locally; TestFlight upload pending commit/push and `ios/scripts/testflight.sh`.
+  - `cd ios && ./scripts/testflight.sh` archived and uploaded successfully.
+- Status: uploaded successfully to App Store Connect/TestFlight at 2026-07-13 09:45 America/Sao_Paulo.
+- Apple processing: uploaded package is processing.
 
 ## 2026-07-12 - Widget Extension And Live Activity Base
 
