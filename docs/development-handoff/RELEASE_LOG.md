@@ -4,6 +4,25 @@ Generated: 2026-07-12T11:12:41-03:00
 
 Record every deploy, TestFlight/App Store upload, web publish and external processing status here.
 
+## 2026-07-13 - Feedback Adjustments 1.4.0 (Build 10)
+
+- App: Jarvis iOS
+- Bundle id: `br.app.egger.jarvis`
+- Widget extension bundle id: `br.app.egger.jarvis.widgets`
+- Version/build: `1.4.0` / `10`
+- Source feedback: TestFlight feedback zips `testflight_feedback-2.zip` through `testflight_feedback-6.zip`.
+- Changes:
+  - Removed cost/spend lookup from the model test result.
+  - Added OpenRouter as an alternate AI provider with separate API key and model list.
+  - Added editable Second Brain notes by tapping graph bubbles or cards.
+  - Improved masculine/feminine voice selection by preferring named Portuguese voices.
+  - Fixed follow-up listening so speech started within 2 seconds after Jarvis finishes speaking stays in direct-command mode.
+- Validation:
+  - `cd ios && xcodegen generate` succeeded.
+  - `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataFeedback build` succeeded.
+  - Installed and launched on iPhone 17 iOS 26.5 Simulator and captured `ios-simulator-feedback-adjustments-2026-07-13.png`.
+- Status: implementation validated locally; TestFlight upload pending commit/push and `ios/scripts/testflight.sh`.
+
 ## 2026-07-12 - Widget Extension And Live Activity Base
 
 - App: Jarvis iOS

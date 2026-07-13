@@ -1,6 +1,6 @@
 {
   "schema": "project-handoff-docs/v1",
-  "generated_at": "2026-07-12T11:12:41-03:00",
+  "generated_at": "2026-07-13T09:42:12-03:00",
   "project": {
     "name": "Jarvis@apvictorio",
     "root": "/Users/ildemareggerjunior/Projects/Jarvis@apvictorio",
@@ -11,25 +11,23 @@
   },
   "git": {
     "branch": "main",
-    "commit": "fab17281",
-    "status": "M ios/Jarvis.xcodeproj/project.pbxproj\n M ios/Sources/Info.plist\n M ios/project.yml\n?? ios/Shared/\n?? ios/Sources/App/JarvisLiveActivityController.swift\n?? ios/Widgets/",
+    "commit": "3950ae15",
+    "status": "M docs/development-handoff/PROJECT_CONTEXT.md\n M docs/development-handoff/SCREENSHOTS.md\n M ios/Jarvis.xcodeproj/project.pbxproj\n M ios/Sources/App/JarvisSession.swift\n M ios/Sources/App/RootView.swift\n M ios/Sources/Services/AnthropicClient.swift\n M ios/Sources/Version/VersionHistory.swift\n M ios/Sources/Voice/SpeechRecognizer.swift\n M ios/Sources/Voice/SpeechSynthesizer.swift\n M ios/project.yml\n?? docs/development-handoff/screenshots/carplay-simulator-window-2026-07-12.png\n?? docs/development-handoff/screenshots/ios-simulator-feedback-adjustments-2026-07-13.png",
     "remote": "https://github.com/eggerjunior/Jarvis.git",
     "latest_commits": [
+      "3950ae1 Document CarPlay simulator validation limits",
+      "682f7ec Record TestFlight upload for 1.3.0",
+      "62bef40 Add Jarvis widget and live activity base",
       "fab1728 Move web settings into a modal and add org spend to model test",
-      "94438ad Show organization spend in model test result via Admin API",
-      "efeb0b6 Move API key/model/test/voice into a settings sheet on iOS",
-      "e8af9b3 Update Jarvis web versioning and model test",
-      "9011f46 Add Anthropic model test"
+      "94438ad Show organization spend in model test result via Admin API"
     ],
     "latest_tags": []
   },
   "version": {
-    "ios_marketing_version": "1.3.0",
-    "ios_current_project_version": "9",
+    "ios_marketing_version": "1.4.0",
+    "ios_current_project_version": "10",
     "ios_bundle_id": "br.app.egger.jarvis",
-    "widget_bundle_id": "br.app.egger.jarvis.widgets",
-    "widget_bundle_resource_id": "Z7SGYGS278",
-    "package_name": "jarvis-web"
+    "widget_bundle_id": "br.app.egger.jarvis.widgets"
   },
   "documentation": [
     "docs/development-handoff/README.md",
@@ -40,17 +38,21 @@
   ],
   "key_files": [
     "ios/project.yml",
-    "ios/Sources/App/JarvisApp.swift",
+    "ios/Sources/App/JarvisSession.swift",
     "ios/Sources/App/RootView.swift",
-    "ios/Sources/App/JarvisLiveActivityController.swift",
-    "ios/Shared/JarvisLiveActivityAttributes.swift",
-    "ios/Widgets/JarvisWidgets.swift",
-    "ios/Sources/Info.plist",
+    "ios/Sources/Services/AnthropicClient.swift",
+    "ios/Sources/Voice/SpeechRecognizer.swift",
+    "ios/Sources/Voice/SpeechSynthesizer.swift",
     "ios/Sources/Version/VersionHistory.swift",
+    "ios/Sources/Info.plist",
     "package.json",
     "scripts/build-web.sh"
   ],
-  "screenshots": [],
+  "screenshots": [
+    "docs/development-handoff/screenshots/carplay-simulator-window-2026-07-12.png",
+    "docs/development-handoff/screenshots/ios-simulator-feedback-adjustments-2026-07-13.png",
+    "docs/development-handoff/screenshots/ios-simulator-jarvis-installed-2026-07-12.png"
+  ],
   "import_order": [
     "docs/development-handoff/README.md",
     "docs/development-handoff/PROJECT_CONTEXT.md",

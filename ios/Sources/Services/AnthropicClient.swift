@@ -12,7 +12,7 @@ struct AnthropicRequest: Codable {
     let messages: [ClaudeMessage]
 }
 
-struct AnthropicResult {
+struct AIModelResult {
     let text: String
     let requestedModel: String
     let responseModel: String
@@ -42,85 +42,41 @@ struct AnthropicErrorResponse: Codable {
     let error: APIError?
 }
 
-struct AnthropicCostReport: Codable {
-    struct Bucket: Codable {
-        struct Result: Codable {
-            let amount: String?
-            let currency: String?
-        }
-        let results: [Result]
-    }
-    let data: [Bucket]
-    let has_more: Bool
-    let next_page: String?
+struct OpenRouterRequest: Codable {
+    let model: String
+    let messages: [ClaudeMessage]
+    let max_tokens: Int
 }
 
-final class AnthropicClient {
-    func send(apiKey: String, model: String, system: String, messages: [ClaudeMessage]) async throws -> String {
-        try await sendDetailed(apiKey: apiKey, model: model, system: system, messages: messages, maxTokens: 400).text
+struct OpenRouterResponse: Codable {
+    struct Choice: Codable {
+        let message: ClaudeMessage?
+    }
+    struct Usage: Codable {
+        let prompt_tokens: Int?
+        let completion_tokens: Int?
+    }
+    let model: String?
+    let choices: [Choice]
+    let usage: Usage?
+}
+
+struct OpenRouterErrorResponse: Codable {
+    struct APIError: Codable {
+        let message: String?
+        let code: Int?
+    }
+    let error: APIError?
+}
+
+final class AIModelClient {
+    func send(provider: AIProvider, apiKey: String, model: String, system: String, messages: [ClaudeMessage]) async throws -> String {
+        try await sendDetailed(provider: provider, apiKey: apiKey, model: model, system: system, messages: messages, maxTokens: 400).text
     }
 
-    /// Soma o gasto da organização desde o início do mês corrente via Admin API.
-    /// Requer uma chave com escopo de administrador; a Anthropic não expõe saldo restante
-    /// nem gasto discriminado por chave individual — apenas por organização/workspace.
-    func fetchMonthToDateSpend(apiKey: String) async throws -> (amount: Double, currency: String) {
-        let calendar = Calendar(identifier: .gregorian)
-        var utcCalendar = calendar
-        utcCalendar.timeZone = TimeZone(identifier: "UTC") ?? .current
-        let components = utcCalendar.dateComponents([.year, .month], from: Date())
-        guard let startOfMonth = utcCalendar.date(from: components) else {
-            throw NSError(domain: "Jarvis", code: -3, userInfo: [NSLocalizedDescriptionKey: "Não foi possível calcular o início do mês."])
-        }
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime]
-        let startingAt = formatter.string(from: startOfMonth)
-
-        var total = 0.0
-        var currency = "USD"
-        var page: String? = nil
-
-        repeat {
-            var components = URLComponents(string: "https://api.anthropic.com/v1/organizations/cost_report")!
-            var items = [URLQueryItem(name: "starting_at", value: startingAt), URLQueryItem(name: "bucket_width", value: "1d")]
-            if let page {
-                items.append(URLQueryItem(name: "page", value: page))
-            }
-            components.queryItems = items
-
-            var request = URLRequest(url: components.url!)
-            request.httpMethod = "GET"
-            request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-            request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse else {
-                throw NSError(domain: "Jarvis", code: -2, userInfo: [NSLocalizedDescriptionKey: "Resposta inválida da Anthropic."])
-            }
-            guard (200...299).contains(http.statusCode) else {
-                let decoded = try? JSONDecoder().decode(AnthropicErrorResponse.self, from: data)
-                let message = decoded?.error?.message ?? "Erro HTTP \(http.statusCode)."
-                throw NSError(domain: "Jarvis", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: message])
-            }
-
-            let report = try JSONDecoder().decode(AnthropicCostReport.self, from: data)
-            for bucket in report.data {
-                for result in bucket.results {
-                    if let amount = result.amount, let value = Double(amount) {
-                        total += value
-                    }
-                    if let resultCurrency = result.currency {
-                        currency = resultCurrency
-                    }
-                }
-            }
-            page = report.has_more ? report.next_page : nil
-        } while page != nil
-
-        return (total, currency)
-    }
-
-    func testModel(apiKey: String, model: String) async throws -> AnthropicResult {
+    func testModel(provider: AIProvider, apiKey: String, model: String) async throws -> AIModelResult {
         try await sendDetailed(
+            provider: provider,
             apiKey: apiKey,
             model: model,
             system: "Responda apenas: teste ok.",
@@ -129,7 +85,16 @@ final class AnthropicClient {
         )
     }
 
-    private func sendDetailed(apiKey: String, model: String, system: String, messages: [ClaudeMessage], maxTokens: Int) async throws -> AnthropicResult {
+    private func sendDetailed(provider: AIProvider, apiKey: String, model: String, system: String, messages: [ClaudeMessage], maxTokens: Int) async throws -> AIModelResult {
+        switch provider {
+        case .anthropic:
+            return try await sendAnthropic(apiKey: apiKey, model: model, system: system, messages: messages, maxTokens: maxTokens)
+        case .openRouter:
+            return try await sendOpenRouter(apiKey: apiKey, model: model, system: system, messages: messages, maxTokens: maxTokens)
+        }
+    }
+
+    private func sendAnthropic(apiKey: String, model: String, system: String, messages: [ClaudeMessage], maxTokens: Int) async throws -> AIModelResult {
         guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
             throw NSError(domain: "Jarvis", code: -1, userInfo: [NSLocalizedDescriptionKey: "URL da Anthropic inválida."])
         }
@@ -159,12 +124,53 @@ final class AnthropicClient {
 
         let decoded = try JSONDecoder().decode(AnthropicResponse.self, from: data)
         let text = decoded.content.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Recebi uma resposta vazia, Senhor."
-        return AnthropicResult(
+        return AIModelResult(
             text: text,
             requestedModel: model,
             responseModel: decoded.model ?? model,
             inputTokens: decoded.usage?.input_tokens,
             outputTokens: decoded.usage?.output_tokens
+        )
+    }
+
+    private func sendOpenRouter(apiKey: String, model: String, system: String, messages: [ClaudeMessage], maxTokens: Int) async throws -> AIModelResult {
+        guard let url = URL(string: "https://openrouter.ai/api/v1/chat/completions") else {
+            throw NSError(domain: "Jarvis", code: -1, userInfo: [NSLocalizedDescriptionKey: "URL do OpenRouter inválida."])
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Jarvis", forHTTPHeaderField: "X-OpenRouter-Title")
+
+        var routedMessages = [ClaudeMessage(role: "system", content: system)]
+        routedMessages.append(contentsOf: messages)
+        request.httpBody = try JSONEncoder().encode(OpenRouterRequest(
+            model: model,
+            messages: routedMessages,
+            max_tokens: maxTokens
+        ))
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw NSError(domain: "Jarvis", code: -2, userInfo: [NSLocalizedDescriptionKey: "Resposta inválida do OpenRouter."])
+        }
+
+        guard (200...299).contains(http.statusCode) else {
+            let decoded = try? JSONDecoder().decode(OpenRouterErrorResponse.self, from: data)
+            let message = decoded?.error?.message ?? "Erro HTTP \(http.statusCode)."
+            throw NSError(domain: "Jarvis", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: message])
+        }
+
+        let decoded = try JSONDecoder().decode(OpenRouterResponse.self, from: data)
+        let text = decoded.choices.first?.message?.content.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Recebi uma resposta vazia, Senhor."
+        return AIModelResult(
+            text: text,
+            requestedModel: model,
+            responseModel: decoded.model ?? model,
+            inputTokens: decoded.usage?.prompt_tokens,
+            outputTokens: decoded.usage?.completion_tokens
         )
     }
 }

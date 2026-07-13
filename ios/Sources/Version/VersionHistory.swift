@@ -10,11 +10,24 @@ struct VersionEntry: Identifiable, Hashable {
 }
 
 enum VersionHistory {
-    static let currentVersionFallback = "1.3.0"
-    static let currentBuildFallback = "9"
+    static let currentVersionFallback = "1.4.0"
+    static let currentBuildFallback = "10"
     static let currentCommitFallback = "dev"
 
     static let entries: [VersionEntry] = [
+        VersionEntry(
+            version: "1.4.0",
+            build: "10",
+            date: "13/07/2026",
+            changes: [
+                "Adicionado suporte ao OpenRouter como provedor alternativo de IA, com chave e modelos próprios.",
+                "Removida a consulta de gastos do teste de modelo para manter o teste simples e confiável.",
+                "Corrigida a janela de continuidade para aceitar fala iniciada até 2 segundos após a resposta do Jarvis.",
+                "Melhorada a seleção de voz masculina/feminina com preferência por vozes nomeadas em português.",
+                "Adicionada edição das memórias do Second Brain tocando nos balões ou nos cards."
+            ],
+            isCurrent: true
+        ),
         VersionEntry(
             version: "1.3.0",
             build: "9",
@@ -24,7 +37,7 @@ enum VersionHistory {
                 "Preparada base de Live Activity e Dynamic Island para sessões do assistente.",
                 "Criado Bundle ID da extensão de widgets na Apple Developer."
             ],
-            isCurrent: true
+            isCurrent: false
         ),
         VersionEntry(
             version: "1.2.2",

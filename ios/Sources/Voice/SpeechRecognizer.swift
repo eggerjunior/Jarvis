@@ -4,6 +4,7 @@ import Speech
 
 @MainActor
 protocol JarvisSpeechRecognizerDelegate: AnyObject {
+    func speechDidDetectSpeechActivity()
     func speechDidRecognizeFinalText(_ text: String)
 }
 
@@ -72,6 +73,7 @@ final class JarvisSpeechRecognizer {
                 if !text.isEmpty, text != self.lastText {
                     DispatchQueue.main.async {
                         self.lastText = text
+                        self.delegate?.speechDidDetectSpeechActivity()
                         self.resetSilenceTimer()
                     }
                 }

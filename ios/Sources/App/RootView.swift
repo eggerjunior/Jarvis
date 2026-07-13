@@ -6,6 +6,7 @@ struct RootView: View {
     @State private var showKey = false
     @State private var showingVersionHistory = false
     @State private var showingSettings = false
+    @State private var editingNote: BrainNote?
 
     var body: some View {
         ZStack {
@@ -29,6 +30,11 @@ struct RootView: View {
         }
         .sheet(isPresented: $showingSettings) {
             settingsSheet
+        }
+        .sheet(item: $editingNote) { note in
+            BrainNoteEditor(note: note) { updated in
+                session.updateNote(updated)
+            }
         }
     }
 
@@ -62,11 +68,11 @@ struct RootView: View {
                             .foregroundStyle(.cyan)
                         Group {
                             if showKey {
-                                TextField("Anthropic API key", text: $session.apiKey)
+                                TextField(session.selectedProvider.apiKeyPlaceholder, text: selectedAPIKeyBinding)
                                     .textInputAutocapitalization(.never)
                                     .autocorrectionDisabled()
                             } else {
-                                SecureField("Anthropic API key", text: $session.apiKey)
+                                SecureField(session.selectedProvider.apiKeyPlaceholder, text: selectedAPIKeyBinding)
                                     .textInputAutocapitalization(.never)
                                     .autocorrectionDisabled()
                             }
@@ -82,11 +88,26 @@ struct RootView: View {
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(.cyan.opacity(0.35)))
 
                     HStack(spacing: 10) {
+                        Text("PROVEDOR")
+                            .font(.system(.caption, design: .monospaced).weight(.bold))
+                            .foregroundStyle(.cyan)
+                        Picker("Provedor", selection: $session.selectedProvider) {
+                            ForEach(AIProvider.allCases) { provider in
+                                Text(provider.label).tag(provider)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    .padding(12)
+                    .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.cyan.opacity(0.35)))
+
+                    HStack(spacing: 10) {
                         Text("MODELO")
                             .font(.system(.caption, design: .monospaced).weight(.bold))
                             .foregroundStyle(.cyan)
                         Picker("Modelo", selection: $session.selectedModel) {
-                            ForEach(JarvisSession.availableModels) { model in
+                            ForEach(session.availableModelsForSelectedProvider) { model in
                                 Text("\(model.label) · \(model.price)").tag(model.id)
                             }
                         }
@@ -169,10 +190,27 @@ struct RootView: View {
     }
 
     private var selectedModelDescription: String {
-        guard let model = JarvisSession.availableModels.first(where: { $0.id == session.selectedModel }) else {
+        guard let model = JarvisSession.availableModels.first(where: { $0.id == session.selectedModel && $0.provider == session.selectedProvider }) else {
             return session.selectedModel
         }
         return "\(model.label) · \(model.note)"
+    }
+
+    private var selectedAPIKeyBinding: Binding<String> {
+        Binding(
+            get: {
+                switch session.selectedProvider {
+                case .anthropic: return session.anthropicApiKey
+                case .openRouter: return session.openRouterApiKey
+                }
+            },
+            set: { value in
+                switch session.selectedProvider {
+                case .anthropic: session.anthropicApiKey = value
+                case .openRouter: session.openRouterApiKey = value
+                }
+            }
+        )
     }
 
     private var statusColor: Color {
@@ -266,21 +304,29 @@ struct RootView: View {
                     .foregroundStyle(.secondary)
             }
 
-            BrainGraphView(notes: session.notes)
+            BrainGraphView(notes: session.notes) { note in
+                editingNote = note
+            }
                 .frame(height: 320)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 145), spacing: 10)], spacing: 10) {
                 ForEach(session.notes) { note in
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text(note.title)
-                            .font(.subheadline.weight(.bold))
-                        Text(SecondBrain.areas[note.area]?.label ?? note.area)
-                            .font(.caption2)
-                            .foregroundStyle(SecondBrain.areas[note.area]?.color ?? .gray)
+                    Button {
+                        editingNote = note
+                    } label: {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(note.title)
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(.primary)
+                            Text(SecondBrain.areas[note.area]?.label ?? note.area)
+                                .font(.caption2)
+                                .foregroundStyle(SecondBrain.areas[note.area]?.color ?? .gray)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(10)
+                        .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 8))
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(10)
-                    .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 8))
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -321,6 +367,7 @@ struct RootView: View {
 
 struct BrainGraphView: View {
     let notes: [BrainNote]
+    let onSelect: (BrainNote) -> Void
 
     var body: some View {
         GeometryReader { proxy in
@@ -350,16 +397,21 @@ struct BrainGraphView: View {
                 ForEach(notes) { note in
                     if let placed = points[note.id] {
                         let color = SecondBrain.areas[note.area]?.color ?? .gray
-                        VStack(spacing: 5) {
-                            Circle()
-                                .fill(color)
-                                .frame(width: 30, height: 30)
-                                .shadow(color: color, radius: 10)
-                            Text(note.title)
-                                .font(.caption2.weight(.semibold))
-                                .lineLimit(1)
-                                .foregroundStyle(.white)
+                        Button {
+                            onSelect(note)
+                        } label: {
+                            VStack(spacing: 5) {
+                                Circle()
+                                    .fill(color)
+                                    .frame(width: 30, height: 30)
+                                    .shadow(color: color, radius: 10)
+                                Text(note.title)
+                                    .font(.caption2.weight(.semibold))
+                                    .lineLimit(1)
+                                    .foregroundStyle(.white)
+                            }
                         }
+                        .buttonStyle(.plain)
                         .position(placed.point)
                     }
                 }
@@ -386,5 +438,53 @@ struct BrainGraphView: View {
         path.move(to: start)
         path.addQuadCurve(to: end, control: control)
         return path
+    }
+}
+
+struct BrainNoteEditor: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var draft: BrainNote
+    let onSave: (BrainNote) -> Void
+
+    init(note: BrainNote, onSave: @escaping (BrainNote) -> Void) {
+        _draft = State(initialValue: note)
+        self.onSave = onSave
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Identidade") {
+                    TextField("Título", text: $draft.title)
+                    Picker("Área", selection: $draft.area) {
+                        ForEach(SecondBrain.areas.values.sorted(by: { $0.label < $1.label })) { area in
+                            Text(area.label).tag(area.id)
+                        }
+                    }
+                }
+
+                Section("Regra / contexto") {
+                    TextEditor(text: $draft.body)
+                        .frame(minHeight: 180)
+                }
+            }
+            .navigationTitle("Editar memória")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancelar") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Salvar") {
+                        draft.title = draft.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                        draft.body = draft.body.trimmingCharacters(in: .whitespacesAndNewlines)
+                        onSave(draft)
+                        dismiss()
+                    }
+                    .disabled(draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || draft.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
     }
 }

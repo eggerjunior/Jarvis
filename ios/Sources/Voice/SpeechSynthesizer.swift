@@ -40,7 +40,7 @@ final class JarvisSpeechSynthesizer: NSObject, AVSpeechSynthesizerDelegate, @unc
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = selectedVoice()
         utterance.rate = 0.48
-        utterance.pitchMultiplier = 0.72
+        utterance.pitchMultiplier = voicePreference == .feminine ? 1.02 : 0.72
         synthesizer.speak(utterance)
     }
 
@@ -55,12 +55,23 @@ final class JarvisSpeechSynthesizer: NSObject, AVSpeechSynthesizerDelegate, @unc
         case .automatic:
             return AVSpeechSynthesisVoice(language: "pt-BR")
         case .masculine:
-            return preferredVoice(in: voices, gender: .male)
+            return namedVoice(in: voices, preferredNames: ["Felipe", "Thiago", "Joao", "João", "Daniel"])
+                ?? preferredVoice(in: voices, gender: .male)
                 ?? AVSpeechSynthesisVoice(language: "pt-BR")
         case .feminine:
-            return preferredVoice(in: voices, gender: .female)
+            return namedVoice(in: voices, preferredNames: ["Luciana", "Fernanda", "Mariana"])
+                ?? preferredVoice(in: voices, gender: .female)
                 ?? AVSpeechSynthesisVoice(language: "pt-BR")
         }
+    }
+
+    private func namedVoice(in voices: [AVSpeechSynthesisVoice], preferredNames: [String]) -> AVSpeechSynthesisVoice? {
+        for name in preferredNames {
+            if let voice = voices.first(where: { $0.language.hasPrefix("pt") && ($0.name.localizedCaseInsensitiveContains(name) || $0.identifier.localizedCaseInsensitiveContains(name)) }) {
+                return voice
+            }
+        }
+        return nil
     }
 
     private func preferredVoice(in voices: [AVSpeechSynthesisVoice], gender: AVSpeechSynthesisVoiceGender) -> AVSpeechSynthesisVoice? {

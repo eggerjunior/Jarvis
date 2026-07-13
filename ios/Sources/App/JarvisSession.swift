@@ -1,21 +1,69 @@
 import Foundation
 import SwiftUI
 
+enum AIProvider: String, CaseIterable, Identifiable {
+    case anthropic
+    case openRouter
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .anthropic: return "Anthropic"
+        case .openRouter: return "OpenRouter"
+        }
+    }
+
+    var keychainKey: String {
+        switch self {
+        case .anthropic: return "anthropic_key"
+        case .openRouter: return "openrouter_key"
+        }
+    }
+
+    var modelDefaultsKey: String {
+        switch self {
+        case .anthropic: return "anthropic_model"
+        case .openRouter: return "openrouter_model"
+        }
+    }
+
+    var defaultModel: String {
+        switch self {
+        case .anthropic: return "claude-sonnet-5"
+        case .openRouter: return "openrouter/auto"
+        }
+    }
+
+    var apiKeyPlaceholder: String {
+        switch self {
+        case .anthropic: return "Anthropic API key"
+        case .openRouter: return "OpenRouter API key"
+        }
+    }
+}
+
 @MainActor
 final class JarvisSession: ObservableObject {
-    struct ClaudeModel: Identifiable, Hashable {
+    struct AIModel: Identifiable, Hashable {
         let id: String
+        let provider: AIProvider
         let label: String
         let price: String
         let note: String
     }
 
-    static let availableModels: [ClaudeModel] = [
-        .init(id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5", price: "$1/$5 por MTok", note: "Mais barato e mais rápido"),
-        .init(id: "claude-sonnet-5", label: "Claude Sonnet 5", price: "$2/$10 até 31/08/2026", note: "Equilíbrio custo/inteligência"),
-        .init(id: "claude-opus-4-8", label: "Claude Opus 4.8", price: "$5/$25 por MTok", note: "Trabalho complexo"),
-        .init(id: "claude-fable-5", label: "Claude Fable 5", price: "$10/$50 por MTok", note: "Mais capaz e mais caro")
+    static let availableModels: [AIModel] = [
+        .init(id: "claude-haiku-4-5-20251001", provider: .anthropic, label: "Claude Haiku 4.5", price: "$1/$5 por MTok", note: "Mais barato e mais rápido"),
+        .init(id: "claude-sonnet-5", provider: .anthropic, label: "Claude Sonnet 5", price: "$2/$10 até 31/08/2026", note: "Equilíbrio custo/inteligência"),
+        .init(id: "claude-opus-4-8", provider: .anthropic, label: "Claude Opus 4.8", price: "$5/$25 por MTok", note: "Trabalho complexo"),
+        .init(id: "claude-fable-5", provider: .anthropic, label: "Claude Fable 5", price: "$10/$50 por MTok", note: "Mais capaz e mais caro"),
+        .init(id: "openrouter/auto", provider: .openRouter, label: "OpenRouter Auto", price: "roteamento automático", note: "Escolhe um modelo adequado automaticamente"),
+        .init(id: "~openai/gpt-latest", provider: .openRouter, label: "OpenAI GPT Latest", price: "via OpenRouter", note: "Alias para o GPT flagship mais recente"),
+        .init(id: "anthropic/claude-sonnet-4.5", provider: .openRouter, label: "Claude Sonnet via OpenRouter", price: "via OpenRouter", note: "Claude por agregador"),
+        .init(id: "google/gemini-2.5-pro", provider: .openRouter, label: "Gemini Pro via OpenRouter", price: "via OpenRouter", note: "Google por agregador")
     ]
+
 
     enum State: String {
         case idle = "Aguardando ativação"
@@ -26,11 +74,22 @@ final class JarvisSession: ObservableObject {
     }
 
     @Published var state: State = .idle
-    @Published var apiKey: String = KeychainStore.shared.get(key: "anthropic_key") {
-        didSet { KeychainStore.shared.save(key: "anthropic_key", value: apiKey) }
+    @Published var selectedProvider: AIProvider = AIProvider(rawValue: UserDefaults.standard.string(forKey: "ai_provider") ?? "") ?? .anthropic {
+        didSet {
+            UserDefaults.standard.set(selectedProvider.rawValue, forKey: "ai_provider")
+            if !availableModelsForSelectedProvider.contains(where: { $0.id == selectedModel }) {
+                selectedModel = UserDefaults.standard.string(forKey: selectedProvider.modelDefaultsKey) ?? selectedProvider.defaultModel
+            }
+        }
     }
-    @Published var selectedModel: String = UserDefaults.standard.string(forKey: "anthropic_model") ?? "claude-sonnet-5" {
-        didSet { UserDefaults.standard.set(selectedModel, forKey: "anthropic_model") }
+    @Published var anthropicApiKey: String = KeychainStore.shared.get(key: AIProvider.anthropic.keychainKey) {
+        didSet { KeychainStore.shared.save(key: AIProvider.anthropic.keychainKey, value: anthropicApiKey) }
+    }
+    @Published var openRouterApiKey: String = KeychainStore.shared.get(key: AIProvider.openRouter.keychainKey) {
+        didSet { KeychainStore.shared.save(key: AIProvider.openRouter.keychainKey, value: openRouterApiKey) }
+    }
+    @Published var selectedModel: String = UserDefaults.standard.string(forKey: "anthropic_model") ?? AIProvider.anthropic.defaultModel {
+        didSet { UserDefaults.standard.set(selectedModel, forKey: selectedProvider.modelDefaultsKey) }
     }
     @Published var selectedVoicePreference: JarvisVoicePreference = JarvisVoicePreference(rawValue: UserDefaults.standard.string(forKey: "jarvis_voice_preference") ?? "") ?? .masculine {
         didSet {
@@ -46,11 +105,12 @@ final class JarvisSession: ObservableObject {
     @Published var isActivated = false
     @Published var permissionsGranted = false
 
-    private let client = AnthropicClient()
+    private let client = AIModelClient()
     private let recognizer = JarvisSpeechRecognizer.shared
     private let speaker = JarvisSpeechSynthesizer.shared
     private var messages: [ClaudeMessage] = []
     private var idleTimer: Timer?
+    private var acceptsDirectCommand = false
     private var openFollowUpAfterSpeech = false
 
     let wakeWord = "ei jarvis"
@@ -59,6 +119,9 @@ final class JarvisSession: ObservableObject {
         recognizer.delegate = self
         speaker.delegate = self
         speaker.voicePreference = selectedVoicePreference
+        if !availableModelsForSelectedProvider.contains(where: { $0.id == selectedModel }) {
+            selectedModel = UserDefaults.standard.string(forKey: selectedProvider.modelDefaultsKey) ?? selectedProvider.defaultModel
+        }
     }
 
     func start() {
@@ -95,42 +158,34 @@ final class JarvisSession: ObservableObject {
 
     func testSelectedModel() {
         guard !isTestingModel else { return }
-        guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            modelTestLine = "Cole a API key antes de testar o modelo."
+        guard !currentApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            modelTestLine = "Cole a API key de \(selectedProvider.label) antes de testar o modelo."
             return
         }
 
         isTestingModel = true
-        modelTestLine = "Testando \(selectedModel)..."
+        modelTestLine = "Testando \(selectedProvider.label) / \(selectedModel)..."
 
         Task {
             defer { isTestingModel = false }
             do {
-                let result = try await client.testModel(apiKey: apiKey, model: selectedModel)
+                let result = try await client.testModel(provider: selectedProvider, apiKey: currentApiKey, model: selectedModel)
                 let usage = tokenSummary(input: result.inputTokens, output: result.outputTokens)
-                var line = "Pedido: \(result.requestedModel)\nResposta API: \(result.responseModel)\nTokens: \(usage)\nRetorno: \(result.text)"
-                line += "\n\(await spendSummary())"
-                modelTestLine = line
+                modelTestLine = "Provedor: \(selectedProvider.label)\nPedido: \(result.requestedModel)\nResposta API: \(result.responseModel)\nTokens: \(usage)\nRetorno: \(result.text)"
             } catch {
                 modelTestLine = "Falha no teste: \(classify(error))"
             }
         }
     }
 
-    /// A Anthropic não expõe saldo restante via API — só o gasto acumulado, e apenas por
-    /// organização/workspace (não por chave individual). Isso exige que a chave usada tenha
-    /// escopo de administrador; com uma chave comum, o card informa a limitação.
-    private func spendSummary() async -> String {
-        do {
-            let spend = try await client.fetchMonthToDateSpend(apiKey: apiKey)
-            let formatted = String(format: "%.2f", spend.amount)
-            return "Gasto da organização neste mês: \(spend.currency) \(formatted) (via Admin API; saldo restante não é exposto pela Anthropic, e o gasto não é discriminado por chave individual)."
-        } catch {
-            let ns = error as NSError
-            if ns.code == 401 || ns.code == 403 {
-                return "Gasto: indisponível — esta chave não tem escopo de administrador (Admin API Key) para consultar custos."
-            }
-            return "Gasto: não foi possível consultar agora (\(ns.localizedDescription))."
+    var availableModelsForSelectedProvider: [AIModel] {
+        Self.availableModels.filter { $0.provider == selectedProvider }
+    }
+
+    var currentApiKey: String {
+        switch selectedProvider {
+        case .anthropic: return anthropicApiKey
+        case .openRouter: return openRouterApiKey
         }
     }
 
@@ -173,8 +228,8 @@ final class JarvisSession: ObservableObject {
     }
 
     private func handleCommand(_ text: String) {
-        guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            speak("Cole sua API key da Anthropic nos ajustes superiores, Senhor.", followUp: true)
+        guard !currentApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            speak("Cole sua API key de \(selectedProvider.label) nos ajustes superiores, Senhor.", followUp: true)
             return
         }
 
@@ -186,7 +241,7 @@ final class JarvisSession: ObservableObject {
 
         Task {
             do {
-                var answer = try await client.send(apiKey: apiKey, model: selectedModel, system: systemPrompt(), messages: messages)
+                var answer = try await client.send(provider: selectedProvider, apiKey: currentApiKey, model: selectedModel, system: systemPrompt(), messages: messages)
                 answer = applyMemorySave(answer)
                 messages.append(.init(role: "assistant", content: answer))
                 assistantLine = answer
@@ -200,14 +255,16 @@ final class JarvisSession: ObservableObject {
     }
 
     private var directWindowIsOpen: Bool {
-        idleTimer != nil
+        acceptsDirectCommand
     }
 
     private func openConversationWindow() {
         clearIdleTimer()
+        acceptsDirectCommand = true
         idleTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
             Task { @MainActor in
                 self?.idleTimer = nil
+                self?.acceptsDirectCommand = false
                 self?.state = .idle
                 self?.userLine = "Diga “Ei Jarvis”."
             }
@@ -217,6 +274,20 @@ final class JarvisSession: ObservableObject {
     private func clearIdleTimer() {
         idleTimer?.invalidate()
         idleTimer = nil
+        acceptsDirectCommand = false
+    }
+
+    private func holdConversationWindowForDetectedSpeech() {
+        guard acceptsDirectCommand else { return }
+        idleTimer?.invalidate()
+        idleTimer = nil
+        userLine = "Ouvindo sua resposta..."
+    }
+
+    func updateNote(_ note: BrainNote) {
+        guard let index = notes.firstIndex(where: { $0.id == note.id }) else { return }
+        notes[index] = note
+        saveNotes()
     }
 
     private func speak(_ text: String, followUp: Bool) {
@@ -285,7 +356,7 @@ final class JarvisSession: ObservableObject {
         if message.lowercased().contains("credit") || message.lowercased().contains("balance") {
             return "A chave parece válida, mas falta crédito ou saldo na Anthropic, Senhor."
         }
-        return "Não consegui conectar à Anthropic agora, Senhor."
+        return "Não consegui conectar ao provedor de IA agora, Senhor."
     }
 
     private func tokenSummary(input: Int?, output: Int?) -> String {
@@ -311,6 +382,10 @@ final class JarvisSession: ObservableObject {
 }
 
 extension JarvisSession: JarvisSpeechRecognizerDelegate {
+    func speechDidDetectSpeechActivity() {
+        holdConversationWindowForDetectedSpeech()
+    }
+
     func speechDidRecognizeFinalText(_ text: String) {
         handleRecognized(text)
     }
