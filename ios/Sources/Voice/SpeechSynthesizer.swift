@@ -71,7 +71,10 @@ final class JarvisSpeechSynthesizer: NSObject, AVSpeechSynthesizerDelegate, @unc
     }
 
     func speak(_ text: String) {
-        synthesizer.stopSpeaking(at: .immediate)
+        prepareAudioSession()
+        if synthesizer.isSpeaking {
+            synthesizer.stopSpeaking(at: .immediate)
+        }
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = selectedVoice()
         applyProsody(to: utterance)
@@ -79,7 +82,10 @@ final class JarvisSpeechSynthesizer: NSObject, AVSpeechSynthesizerDelegate, @unc
     }
 
     func preview(_ text: String, voiceIdentifier: String?) {
-        synthesizer.stopSpeaking(at: .immediate)
+        prepareAudioSession()
+        if synthesizer.isSpeaking {
+            synthesizer.stopSpeaking(at: .immediate)
+        }
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = explicitVoice(for: voiceIdentifier) ?? selectedVoice()
         applyProsody(to: utterance)
@@ -122,6 +128,16 @@ final class JarvisSpeechSynthesizer: NSObject, AVSpeechSynthesizerDelegate, @unc
                 ?? namedVoice(in: voices, preferredNames: ["Luciana", "Fernanda", "Mariana", "Maria"])
                 ?? preferredVoice(in: voices, gender: .female)
                 ?? AVSpeechSynthesisVoice(language: "pt-BR")
+        }
+    }
+
+    private func prepareAudioSession() {
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.playAndRecord, mode: .spokenAudio, options: [.duckOthers, .defaultToSpeaker])
+            try session.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            // AVSpeechSynthesizer can still use the default route if the session setup fails.
         }
     }
 

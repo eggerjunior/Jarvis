@@ -1,16 +1,16 @@
 # Project Context
 
-Generated: 2026-07-13T09:42:12-03:00
+Generated: 2026-07-13T17:19:29-03:00
 
 ## Snapshot
 
 - Project: `Jarvis@apvictorio`
 - Root: `/Users/ildemareggerjunior/Projects/Jarvis@apvictorio`
 - Branch: `main`
-- Commit at start of current pass: `f3dcee5`
+- Commit: `690f9117`
 - Git status: dirty
-- iOS version: `1.4.3`
-- iOS build: `13`
+- iOS version: `1.4.4`
+- iOS build: `14`
 - iOS bundle id: `br.app.egger.jarvis`
 - Widget extension bundle id: `br.app.egger.jarvis.widgets`
 - Detected stack: swift, node
@@ -22,13 +22,15 @@ Jarvis is a personal voice assistant for Ildemar, built first as a native iOS ap
 ## Current User-Facing Features
 
 - Native iOS SwiftUI app with wake-word-style flow: the user says or types commands and Jarvis answers in Portuguese.
+- App automatically requests activation when the main view opens and whenever the scene returns to active.
 - Anthropic and OpenRouter API keys are stored locally in Keychain.
 - Settings sheet for provider selection, provider-specific API key, model selection/testing, voice preference, installed iOS voice selection and voice preview.
 - Model test reports provider, requested model, response model, token usage and returned text; cost/spend lookup was removed because it was not reliable for the normal user key flow.
 - Second Brain notes are shown in a visual graph and a card grid; tapping graph bubbles or cards opens an editor for title, area and memory/context text.
 - After Jarvis finishes speaking with a follow-up expected, speech that starts within a 5-second continuation window keeps the conversation open even if final transcription arrives later.
-- Voice recognition now waits longer through natural pauses inside a command and extends the wait when the partial phrase suggests continuation.
+- Voice recognition waits longer through natural pauses inside a command and extends the wait when the partial phrase suggests continuation.
 - Voice synthesis can use an explicit installed iOS voice selected by the user, with a test button in settings.
+- Voice synthesis prepares the audio session before speaking so the first activation after app launch can say the startup line reliably.
 - Questions that require current information are routed through OpenRouter with the `openrouter:web_search` server tool when an OpenRouter key is configured.
 - Version footer exposes app version, build date and git commit.
 - Widget Extension target `JarvisWidgets` provides a small Jarvis status widget.
@@ -61,6 +63,7 @@ Jarvis is a personal voice assistant for Ildemar, built first as a native iOS ap
 - `package.json`
 - `scripts/build-web.sh`
 
+
 ## Data Model And Storage
 
 - Anthropic API key: Keychain key `anthropic_key`.
@@ -89,8 +92,8 @@ Detected version/build fields:
 
 ```json
 {
-  "ios_marketing_version": "1.4.3",
-  "ios_current_project_version": "13",
+  "ios_marketing_version": "1.4.4",
+  "ios_current_project_version": "14",
   "ios_bundle_id": "br.app.egger.jarvis",
   "widget_bundle_id": "br.app.egger.jarvis.widgets",
   "widget_bundle_resource_id": "Z7SGYGS278"
@@ -105,10 +108,16 @@ For distributed iOS builds, use `ios/project.yml` as the source of truth, update
 - Build simulator app plus widget extension: `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build`.
 - Build physical device app: `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -destination 'platform=iOS,id=<device-id>' build`.
 - Open in Xcode: `open ios/Jarvis.xcodeproj`.
-- Web assets exist in the root/frontend areas, but this handoff update focused on native iOS feedback.
+- Web assets exist in the root/frontend areas, but current handoff work focuses on native iOS.
 
 ## Testing And Validation
 
+- 2026-07-13: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -destination 'generic/platform=iOS Simulator' -configuration Debug build` succeeded after adding automatic activation on app open/foreground.
+- 2026-07-13: `cd ios && xcodegen generate` succeeded for version `1.4.4` build `14`.
+- 2026-07-13: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -showBuildSettings -configuration Debug -destination 'generic/platform=iOS Simulator'` confirmed `MARKETING_VERSION = 1.4.4`, `CURRENT_PROJECT_VERSION = 14`, and `PRODUCT_BUNDLE_IDENTIFIER = br.app.egger.jarvis`.
+- 2026-07-13: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -destination 'generic/platform=iOS Simulator' -configuration Debug build` succeeded for version `1.4.4` build `14`; build logs validated `JarvisWidgets.appex` was copied into `Jarvis.app/PlugIns`.
+- 2026-07-13: Installed and launched Jarvis on iPhone 17 iOS 26.5 Simulator (`067DE2A0-9E13-49E6-AFA5-C78D3155EA94`) and captured `ios-simulator-auto-activation-2026-07-13.png`; screenshot confirms automatic startup request reaches the iOS speech-recognition permission flow and the button shows `Ativando`.
+- 2026-07-13: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -destination 'generic/platform=iOS Simulator' -configuration Debug build` succeeded after preparing the audio session before first speech synthesis.
 - 2026-07-13: Extracted and reviewed TestFlight feedback zips `testflight_feedback-2.zip` through `testflight_feedback-6.zip`.
 - 2026-07-13: `cd ios && xcodegen generate` succeeded.
 - 2026-07-13: `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataFeedback build` succeeded for version `1.4.0` build `10`.
@@ -127,6 +136,12 @@ For distributed iOS builds, use `ios/project.yml` as the source of truth, update
 
 ## Recent Decisions
 
+- RootView now calls `session.start()` when the main view task first runs and when `scenePhase` returns to `.active`, so opening/reopening the app attempts activation automatically.
+- `JarvisSession.start()` now tracks `isStarting` and a request UUID to avoid duplicate permission/activation flows and to ignore stale async permission results after a stop.
+- The activation button shows `Ativando` and is disabled while permissions/activation are in flight.
+- Version `1.4.4` build `14` is a native iOS release; the web surface was not changed because automatic foreground activation, iOS speech permissions and `AVAudioSession` have no equivalent in the current web surface.
+- Prepared the `AVAudioSession` inside `JarvisSpeechSynthesizer` before each `speak`/`preview` call so the startup utterance is not lost on the first activation after launch or permission setup.
+- Avoided calling `stopSpeaking(at:)` before the first utterance unless the synthesizer is already speaking, reducing the chance of cancelling an initial queued utterance.
 - Added OpenRouter as a second provider instead of replacing Anthropic, preserving the known working direct Claude flow.
 - Removed cost/spend lookup from model testing because normal API keys do not reliably have admin-cost access and the feedback asked to remove that noisy result.
 - Increased the follow-up window from 2 seconds to 5 seconds; partial speech detected inside that window keeps direct-command mode active until final transcription arrives.
@@ -138,6 +153,8 @@ For distributed iOS builds, use `ios/project.yml` as the source of truth, update
 
 ## Known Risks And Pending Work
 
+- First launch after install may show iOS speech/microphone permission prompts before the app can become fully active and speak.
+- `simctl privacy booted grant microphone br.app.egger.jarvis` returned `Operation not permitted` in the local simulator, so the screenshot validation captures the permission request rather than the fully granted listening state.
 - OpenRouter responses and web search depend on the selected model slug, account credit and OpenRouter server-tool availability; the app stores only the API key and does not yet fetch the live OpenRouter model catalog.
 - Current-information questions need an OpenRouter key; Anthropic-only configuration cannot perform web search from the app.
 - AVSpeechSynthesisVoice availability varies by device and installed voices; the user can now explicitly select and test installed voices, but a truly native male pt-BR timbre still depends on system voice availability.

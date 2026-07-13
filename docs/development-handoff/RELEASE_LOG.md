@@ -4,6 +4,28 @@ Generated: 2026-07-12T11:12:41-03:00
 
 Record every deploy, TestFlight/App Store upload, web publish and external processing status here.
 
+## 2026-07-13 - Auto Activation 1.4.4 (Build 14)
+
+- App: Jarvis iOS
+- Bundle id: `br.app.egger.jarvis`
+- Widget extension bundle id: `br.app.egger.jarvis.widgets`
+- Version/build: `1.4.4` / `14`
+- Binary commit: `PENDING_COMMIT`
+- Changes:
+  - Jarvis now attempts activation automatically when the app opens.
+  - Jarvis attempts activation again when returning to foreground.
+  - Added `Ativando` button state and duplicate-start protection while permissions/activation are in flight.
+  - Prepared the audio session before speech synthesis so the first startup line is not lost.
+  - Preserved the embedded `JarvisWidgets` extension in the distributed app.
+- Validation:
+  - `cd ios && xcodegen generate` succeeded.
+  - `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -showBuildSettings -configuration Debug -destination 'generic/platform=iOS Simulator'` confirmed `MARKETING_VERSION = 1.4.4`, `CURRENT_PROJECT_VERSION = 14`, and bundle id `br.app.egger.jarvis`.
+  - `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -destination 'generic/platform=iOS Simulator' -configuration Debug build` succeeded and validated `JarvisWidgets.appex` is embedded under `Jarvis.app/PlugIns`.
+  - Installed and launched on iPhone 17 iOS 26.5 Simulator and captured `ios-simulator-auto-activation-2026-07-13.png`.
+- Web parity: no web deploy for this release because the change depends on native iOS foreground lifecycle, speech permission and `AVAudioSession` behavior.
+- Status: prepared for TestFlight upload at 2026-07-13 17:36 America/Sao_Paulo.
+- Apple processing: pending upload.
+
 ## 2026-07-13 - Installed Voice Picker 1.4.3 (Build 13)
 
 - App: Jarvis iOS

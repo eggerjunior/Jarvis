@@ -1,12 +1,14 @@
 import SwiftUI
 
 struct RootView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var session = JarvisSession()
     @State private var typedCommand = ""
     @State private var showKey = false
     @State private var showingVersionHistory = false
     @State private var showingSettings = false
     @State private var editingNote: BrainNote?
+    @State private var didRequestAutoActivation = false
 
     var body: some View {
         ZStack {
@@ -25,6 +27,15 @@ struct RootView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .task {
+            guard !didRequestAutoActivation else { return }
+            didRequestAutoActivation = true
+            session.start()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            session.start()
+        }
         .sheet(isPresented: $showingVersionHistory) {
             VersionHistoryView()
         }
@@ -50,11 +61,12 @@ struct RootView: View {
             .buttonStyle(.bordered)
             .tint(.cyan)
 
-            Button(session.isActivated ? "Parar" : "Ativar") {
+            Button(session.isActivated ? "Parar" : (session.isStarting ? "Ativando" : "Ativar")) {
                 session.isActivated ? session.stop() : session.start()
             }
             .buttonStyle(.borderedProminent)
             .tint(session.isActivated ? .red : .cyan)
+            .disabled(session.isStarting)
         }
     }
 

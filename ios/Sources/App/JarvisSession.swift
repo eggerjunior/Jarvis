@@ -112,6 +112,7 @@ final class JarvisSession: ObservableObject {
     @Published var isTestingModel = false
     @Published var notes: [BrainNote] = JarvisSession.loadNotes()
     @Published var isActivated = false
+    @Published var isStarting = false
     @Published var permissionsGranted = false
 
     private let client = AIModelClient()
@@ -121,6 +122,7 @@ final class JarvisSession: ObservableObject {
     private var idleTimer: Timer?
     private var acceptsDirectCommand = false
     private var openFollowUpAfterSpeech = false
+    private var activationRequestID: UUID?
 
     let wakeWord = "ei jarvis"
 
@@ -135,8 +137,19 @@ final class JarvisSession: ObservableObject {
     }
 
     func start() {
+        guard !isActivated, !isStarting else { return }
+        isStarting = true
+        let requestID = UUID()
+        activationRequestID = requestID
+
         Task {
-            permissionsGranted = await JarvisSpeechRecognizer.requestPermissions()
+            let granted = await JarvisSpeechRecognizer.requestPermissions()
+            guard activationRequestID == requestID else { return }
+
+            permissionsGranted = granted
+            isStarting = false
+            activationRequestID = nil
+
             guard permissionsGranted else {
                 state = .error
                 assistantLine = "Permita microfone e reconhecimento de fala nos Ajustes do iOS."
@@ -151,6 +164,8 @@ final class JarvisSession: ObservableObject {
     }
 
     func stop() {
+        activationRequestID = nil
+        isStarting = false
         clearIdleTimer()
         recognizer.stop()
         speaker.stop()

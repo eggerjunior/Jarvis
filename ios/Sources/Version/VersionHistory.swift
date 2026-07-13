@@ -10,11 +10,23 @@ struct VersionEntry: Identifiable, Hashable {
 }
 
 enum VersionHistory {
-    static let currentVersionFallback = "1.4.3"
-    static let currentBuildFallback = "13"
+    static let currentVersionFallback = "1.4.4"
+    static let currentBuildFallback = "14"
     static let currentCommitFallback = "dev"
 
     static let entries: [VersionEntry] = [
+        VersionEntry(
+            version: "1.4.4",
+            build: "14",
+            date: "13/07/2026",
+            changes: [
+                "Jarvis agora tenta ativar automaticamente ao abrir o app.",
+                "Jarvis tenta reativar ao voltar para primeiro plano.",
+                "Adicionado estado Ativando para evitar múltiplas ativações simultâneas.",
+                "Preparada a sessão de áudio antes da fala inicial para evitar silêncio no primeiro acionamento."
+            ],
+            isCurrent: true
+        ),
         VersionEntry(
             version: "1.4.3",
             build: "13",
@@ -24,7 +36,7 @@ enum VersionHistory {
                 "Adicionado botão para testar imediatamente a voz selecionada.",
                 "A voz escolhida pelo usuário agora tem prioridade sobre os fallbacks Masculina, Automática e Feminina."
             ],
-            isCurrent: true
+            isCurrent: false
         ),
         VersionEntry(
             version: "1.4.2",
