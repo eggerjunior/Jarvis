@@ -7,7 +7,7 @@ Generated: 2026-07-13T09:42:12-03:00
 - Project: `Jarvis@apvictorio`
 - Root: `/Users/ildemareggerjunior/Projects/Jarvis@apvictorio`
 - Branch: `main`
-- Commit at start of current pass: `f383298`
+- Commit at start of current pass: `8950b14`
 - Git status: dirty
 - iOS version: `1.4.1`
 - iOS build: `11`
@@ -110,6 +110,7 @@ For distributed iOS builds, use `ios/project.yml` as the source of truth, update
 - 2026-07-13: `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataFeedback build` succeeded for version `1.4.0` build `10`.
 - 2026-07-13: `cd ios && xcodegen generate` succeeded for version `1.4.1` build `11`.
 - 2026-07-13: `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataVoiceFollowup build` succeeded.
+- 2026-07-13: `cd ios && ./scripts/testflight.sh` archived and uploaded version `1.4.1` build `11` successfully to App Store Connect/TestFlight.
 - 2026-07-13: Installed and launched Jarvis on iPhone 17 iOS 26.5 Simulator (`067DE2A0-9E13-49E6-AFA5-C78D3155EA94`) and captured `ios-simulator-feedback-adjustments-2026-07-13.png`.
 - 2026-07-12: Installed Additional Tools for Xcode 26.6 CarPlay Simulator locally. CarPlay Simulator opens, but it connects to a real/remote iPhone/iPad, not to CoreSimulator iOS devices.
 

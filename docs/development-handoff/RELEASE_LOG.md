@@ -10,6 +10,7 @@ Record every deploy, TestFlight/App Store upload, web publish and external proce
 - Bundle id: `br.app.egger.jarvis`
 - Widget extension bundle id: `br.app.egger.jarvis.widgets`
 - Version/build: `1.4.1` / `11`
+- Binary commit: `8950b142`
 - Changes:
   - Increased the post-speech continuation window from 2 seconds to 5 seconds.
   - Removed remaining active-flow text that mentioned 2 seconds.
@@ -17,7 +18,9 @@ Record every deploy, TestFlight/App Store upload, web publish and external proce
 - Validation:
   - `cd ios && xcodegen generate` succeeded.
   - `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataVoiceFollowup build` succeeded.
-- Status: implementation validated locally; TestFlight upload pending commit/push and `ios/scripts/testflight.sh`.
+  - `cd ios && ./scripts/testflight.sh` archived and uploaded successfully.
+- Status: uploaded successfully to App Store Connect/TestFlight at 2026-07-13 10:30 America/Sao_Paulo.
+- Apple processing: uploaded package is processing.
 
 ## 2026-07-13 - Feedback Adjustments 1.4.0 (Build 10)
 
