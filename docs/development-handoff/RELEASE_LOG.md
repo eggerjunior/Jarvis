@@ -4,6 +4,23 @@ Generated: 2026-07-12T11:12:41-03:00
 
 Record every deploy, TestFlight/App Store upload, web publish and external processing status here.
 
+## 2026-07-13 - Speech Pause And Web Search 1.4.2 (Build 12)
+
+- App: Jarvis iOS
+- Bundle id: `br.app.egger.jarvis`
+- Widget extension bundle id: `br.app.egger.jarvis.widgets`
+- Version/build: `1.4.2` / `12`
+- Source feedback: TestFlight feedback `testflight_feedback.zip` for version `1.4.1` build `11`.
+- Changes:
+  - Increased the in-command speech silence threshold from 1 second to 3 seconds.
+  - Added a 5-second continuation wait when the partial transcription ends with words that usually indicate the phrase is not complete.
+  - Routed questions about current events, news, prices, recent versions and web searches through OpenRouter web search when an OpenRouter API key is configured.
+  - Added a clear spoken fallback when current-information questions require OpenRouter but no OpenRouter key is configured.
+- Validation:
+  - `cd ios && xcodegen generate` succeeded.
+  - `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataFeedback142 build` succeeded.
+- Status: implementation validated locally; TestFlight upload pending commit/push and `ios/scripts/testflight.sh`.
+
 ## 2026-07-13 - Follow-Up And Voice Fix 1.4.1 (Build 11)
 
 - App: Jarvis iOS

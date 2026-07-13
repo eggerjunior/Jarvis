@@ -231,8 +231,17 @@ final class JarvisSession: ObservableObject {
     }
 
     private func handleCommand(_ text: String) {
-        guard !currentApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            speak("Cole sua API key de \(selectedProvider.label) nos ajustes superiores, Senhor.", followUp: true)
+        let requestedWebSearch = shouldUseWebSearch(for: text)
+        let provider = requestedWebSearch ? .openRouter : selectedProvider
+        let apiKey = apiKey(for: provider)
+        let model = model(for: provider)
+
+        guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            if requestedWebSearch {
+                speak("Para pesquisar atualidades na internet, cole sua API key do OpenRouter nos ajustes, Senhor.", followUp: true)
+            } else {
+                speak("Cole sua API key de \(provider.label) nos ajustes superiores, Senhor.", followUp: true)
+            }
             return
         }
 
@@ -240,17 +249,27 @@ final class JarvisSession: ObservableObject {
         recognizer.stop()
         state = .thinking
         userLine = text
+        if requestedWebSearch {
+            assistantLine = "Pesquisando informações atuais..."
+        }
         messages.append(.init(role: "user", content: text))
 
         Task {
             do {
-                var answer = try await client.send(provider: selectedProvider, apiKey: currentApiKey, model: selectedModel, system: systemPrompt(), messages: messages)
+                var answer = try await client.send(
+                    provider: provider,
+                    apiKey: apiKey,
+                    model: model,
+                    system: systemPrompt(webSearchEnabled: requestedWebSearch),
+                    messages: messages,
+                    enableWebSearch: requestedWebSearch
+                )
                 answer = applyMemorySave(answer)
                 messages.append(.init(role: "assistant", content: answer))
                 assistantLine = answer
                 speak(answer, followUp: true)
             } catch {
-                let message = classify(error)
+                let message = classify(error, provider: provider)
                 assistantLine = message
                 speak(message, followUp: true)
             }
@@ -306,7 +325,7 @@ final class JarvisSession: ObservableObject {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func systemPrompt() -> String {
+    private func systemPrompt(webSearchEnabled: Bool = false) -> String {
         let grouped = SecondBrain.areas.keys.sorted().compactMap { key -> String? in
             let areaNotes = notes.filter { $0.area == key }
             guard !areaNotes.isEmpty else { return nil }
@@ -314,10 +333,16 @@ final class JarvisSession: ObservableObject {
             let body = areaNotes.map { "- \($0.title): \($0.body)" }.joined(separator: "\n")
             return "\(label):\n\(body)"
         }.joined(separator: "\n\n")
+        let currentDate = Date().formatted(.dateTime.locale(Locale(identifier: "pt_BR")).day().month(.wide).year())
+        let searchInstruction = webSearchEnabled
+            ? "Você tem busca web habilitada nesta resposta. Use-a para fatos recentes, notícias, datas, preços, versões, pessoas públicas e qualquer informação temporal. Cite a fonte de forma curta quando ela fundamentar a resposta."
+            : "Você não tem busca web nesta resposta. Se a pergunta depender de atualidades ou internet e você não tiver busca habilitada, diga isso de forma curta e peça para usar o provedor OpenRouter."
 
         return """
         Você é Jarvis, um assistente pessoal com personalidade Formal Britânico. Trate o usuário como Senhor.
         Responda sempre em português do Brasil, em tom falado, curto, útil e elegante. Use 2 a 4 frases. Não use emojis nem markdown.
+        Data atual: \(currentDate).
+        \(searchInstruction)
 
         SECOND BRAIN COMPLETO:
         \(grouped)
@@ -350,16 +375,43 @@ final class JarvisSession: ObservableObject {
         return clean.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func classify(_ error: Error) -> String {
+    private func classify(_ error: Error, provider: AIProvider? = nil) -> String {
         let ns = error as NSError
         if ns.code == 401 { return "Chave inválida ou não autorizada, Senhor." }
         if ns.code == 403 { return "A chave não tem permissão para esse recurso, Senhor." }
-        if ns.code == 429 { return "Limite atingido ou crédito insuficiente na Anthropic, Senhor." }
+        if ns.code == 429 { return "Limite atingido ou crédito insuficiente em \(provider?.label ?? "seu provedor"), Senhor." }
         let message = ns.localizedDescription
         if message.lowercased().contains("credit") || message.lowercased().contains("balance") {
-            return "A chave parece válida, mas falta crédito ou saldo na Anthropic, Senhor."
+            return "A chave parece válida, mas falta crédito ou saldo em \(provider?.label ?? "seu provedor"), Senhor."
         }
         return "Não consegui conectar ao provedor de IA agora, Senhor."
+    }
+
+    private func apiKey(for provider: AIProvider) -> String {
+        switch provider {
+        case .anthropic: return anthropicApiKey
+        case .openRouter: return openRouterApiKey
+        }
+    }
+
+    private func model(for provider: AIProvider) -> String {
+        switch provider {
+        case .anthropic:
+            return UserDefaults.standard.string(forKey: AIProvider.anthropic.modelDefaultsKey) ?? AIProvider.anthropic.defaultModel
+        case .openRouter:
+            return UserDefaults.standard.string(forKey: AIProvider.openRouter.modelDefaultsKey) ?? AIProvider.openRouter.defaultModel
+        }
+    }
+
+    private func shouldUseWebSearch(for text: String) -> Bool {
+        let normalized = normalize(text)
+        let triggers = [
+            "atual", "atuais", "atualidade", "atualizado", "atualizada", "agora", "hoje", "ontem", "amanha",
+            "noticia", "noticias", "pesquisa", "pesquisar", "internet", "web", "google", "busca", "buscar",
+            "preco", "cotacao", "versao mais recente", "ultimo", "ultima", "lancamento", "tempo real",
+            "o que voce sabe", "quem e", "qual e", "me fale sobre"
+        ]
+        return triggers.contains { normalized.contains($0) }
     }
 
     private func tokenSummary(input: Int?, output: Int?) -> String {

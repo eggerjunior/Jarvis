@@ -46,6 +46,11 @@ struct OpenRouterRequest: Codable {
     let model: String
     let messages: [ClaudeMessage]
     let max_tokens: Int
+    let tools: [OpenRouterTool]?
+}
+
+struct OpenRouterTool: Codable {
+    let type: String
 }
 
 struct OpenRouterResponse: Codable {
@@ -70,8 +75,8 @@ struct OpenRouterErrorResponse: Codable {
 }
 
 final class AIModelClient {
-    func send(provider: AIProvider, apiKey: String, model: String, system: String, messages: [ClaudeMessage]) async throws -> String {
-        try await sendDetailed(provider: provider, apiKey: apiKey, model: model, system: system, messages: messages, maxTokens: 400).text
+    func send(provider: AIProvider, apiKey: String, model: String, system: String, messages: [ClaudeMessage], enableWebSearch: Bool = false) async throws -> String {
+        try await sendDetailed(provider: provider, apiKey: apiKey, model: model, system: system, messages: messages, maxTokens: 400, enableWebSearch: enableWebSearch).text
     }
 
     func testModel(provider: AIProvider, apiKey: String, model: String) async throws -> AIModelResult {
@@ -81,16 +86,17 @@ final class AIModelClient {
             model: model,
             system: "Responda apenas: teste ok.",
             messages: [.init(role: "user", content: "Teste de conectividade. Qual modelo recebeu esta requisição?")],
-            maxTokens: 80
+            maxTokens: 80,
+            enableWebSearch: false
         )
     }
 
-    private func sendDetailed(provider: AIProvider, apiKey: String, model: String, system: String, messages: [ClaudeMessage], maxTokens: Int) async throws -> AIModelResult {
+    private func sendDetailed(provider: AIProvider, apiKey: String, model: String, system: String, messages: [ClaudeMessage], maxTokens: Int, enableWebSearch: Bool) async throws -> AIModelResult {
         switch provider {
         case .anthropic:
             return try await sendAnthropic(apiKey: apiKey, model: model, system: system, messages: messages, maxTokens: maxTokens)
         case .openRouter:
-            return try await sendOpenRouter(apiKey: apiKey, model: model, system: system, messages: messages, maxTokens: maxTokens)
+            return try await sendOpenRouter(apiKey: apiKey, model: model, system: system, messages: messages, maxTokens: maxTokens, enableWebSearch: enableWebSearch)
         }
     }
 
@@ -133,7 +139,7 @@ final class AIModelClient {
         )
     }
 
-    private func sendOpenRouter(apiKey: String, model: String, system: String, messages: [ClaudeMessage], maxTokens: Int) async throws -> AIModelResult {
+    private func sendOpenRouter(apiKey: String, model: String, system: String, messages: [ClaudeMessage], maxTokens: Int, enableWebSearch: Bool) async throws -> AIModelResult {
         guard let url = URL(string: "https://openrouter.ai/api/v1/chat/completions") else {
             throw NSError(domain: "Jarvis", code: -1, userInfo: [NSLocalizedDescriptionKey: "URL do OpenRouter inválida."])
         }
@@ -149,7 +155,8 @@ final class AIModelClient {
         request.httpBody = try JSONEncoder().encode(OpenRouterRequest(
             model: model,
             messages: routedMessages,
-            max_tokens: maxTokens
+            max_tokens: maxTokens,
+            tools: enableWebSearch ? [OpenRouterTool(type: "openrouter:web_search")] : nil
         ))
 
         let (data, response) = try await URLSession.shared.data(for: request)

@@ -11,6 +11,11 @@ protocol JarvisSpeechRecognizerDelegate: AnyObject {
 final class JarvisSpeechRecognizer {
     static let shared = JarvisSpeechRecognizer()
 
+    private enum SilenceTiming {
+        static let normalPause: TimeInterval = 3.0
+        static let likelyContinuationPause: TimeInterval = 5.0
+    }
+
     weak var delegate: JarvisSpeechRecognizerDelegate?
 
     private let audioEngine = AVAudioEngine()
@@ -99,7 +104,8 @@ final class JarvisSpeechRecognizer {
 
     private func resetSilenceTimer() {
         silenceTimer?.invalidate()
-        silenceTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
+        let text = lastText
+        silenceTimer = Timer.scheduledTimer(withTimeInterval: silenceInterval(for: text), repeats: false) { [weak self] _ in
             guard let self else { return }
             let text = self.lastText
             self.lastText = ""
@@ -107,5 +113,24 @@ final class JarvisSpeechRecognizer {
                 Task { @MainActor in self.delegate?.speechDidRecognizeFinalText(text) }
             }
         }
+    }
+
+    private func silenceInterval(for text: String) -> TimeInterval {
+        let normalized = text
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            .lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
+        let words = normalized.split(separator: " ").map(String.init)
+        guard let lastWord = words.last else { return SilenceTiming.normalPause }
+
+        let continuationWords: Set<String> = [
+            "a", "as", "com", "da", "das", "de", "do", "dos", "e", "em", "na", "nas", "no", "nos",
+            "o", "os", "para", "por", "que", "qual", "quais", "quem", "sobre"
+        ]
+        if continuationWords.contains(lastWord) {
+            return SilenceTiming.likelyContinuationPause
+        }
+
+        return SilenceTiming.normalPause
     }
 }

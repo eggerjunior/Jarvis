@@ -10,11 +10,22 @@ struct VersionEntry: Identifiable, Hashable {
 }
 
 enum VersionHistory {
-    static let currentVersionFallback = "1.4.1"
-    static let currentBuildFallback = "11"
+    static let currentVersionFallback = "1.4.2"
+    static let currentBuildFallback = "12"
     static let currentCommitFallback = "dev"
 
     static let entries: [VersionEntry] = [
+        VersionEntry(
+            version: "1.4.2",
+            build: "12",
+            date: "13/07/2026",
+            changes: [
+                "Aumentada a tolerância a pausas naturais durante comandos de voz para evitar envio de frases incompletas.",
+                "Adicionado tempo extra quando a transcrição termina em palavra que sugere continuação.",
+                "Adicionada busca web via OpenRouter para perguntas sobre atualidades, notícias, preços, versões e fatos recentes."
+            ],
+            isCurrent: true
+        ),
         VersionEntry(
             version: "1.4.1",
             build: "11",
@@ -24,7 +35,7 @@ enum VersionHistory {
                 "Removidos textos que ainda mencionavam 2 segundos no fluxo de ativação.",
                 "Reforçada a seleção de voz masculina com identificadores conhecidos e prosódia mais grave quando o iOS cair no fallback pt-BR."
             ],
-            isCurrent: true
+            isCurrent: false
         ),
         VersionEntry(
             version: "1.4.0",
