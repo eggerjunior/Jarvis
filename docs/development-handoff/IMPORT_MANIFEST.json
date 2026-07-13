@@ -11,8 +11,8 @@
   },
   "git": {
     "branch": "main",
-    "commit": "6bc2d32",
-    "status": "M docs/development-handoff/IMPORT_MANIFEST.json\n M docs/development-handoff/PROJECT_CONTEXT.md\n M docs/development-handoff/README.md\n M docs/development-handoff/RELEASE_LOG.md",
+    "commit": "pending release commit",
+    "status": "M docs/development-handoff/IMPORT_MANIFEST.json\n M docs/development-handoff/PROJECT_CONTEXT.md\n M docs/development-handoff/README.md\n M docs/development-handoff/RELEASE_LOG.md\n M ios/Jarvis.xcodeproj/project.pbxproj\n M ios/Sources/App/JarvisSession.swift\n M ios/Sources/App/RootView.swift\n M ios/Sources/Version/VersionHistory.swift\n M ios/Sources/Voice/SpeechSynthesizer.swift\n M ios/project.yml",
     "remote": "https://github.com/eggerjunior/Jarvis.git",
     "latest_commits": [
       "3950ae1 Document CarPlay simulator validation limits",
@@ -24,8 +24,8 @@
     "latest_tags": []
   },
   "version": {
-    "ios_marketing_version": "1.4.2",
-    "ios_current_project_version": "12",
+    "ios_marketing_version": "1.4.3",
+    "ios_current_project_version": "13",
     "ios_bundle_id": "br.app.egger.jarvis",
     "widget_bundle_id": "br.app.egger.jarvis.widgets"
   },
@@ -51,6 +51,7 @@
   "screenshots": [
     "docs/development-handoff/screenshots/carplay-simulator-window-2026-07-12.png",
     "docs/development-handoff/screenshots/ios-simulator-feedback-adjustments-2026-07-13.png",
+    "docs/development-handoff/screenshots/ios-simulator-voice-picker-2026-07-13.png",
     "docs/development-handoff/screenshots/ios-simulator-jarvis-installed-2026-07-12.png"
   ],
   "import_order": [

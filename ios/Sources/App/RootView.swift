@@ -145,16 +145,35 @@ struct RootView: View {
                     .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(.cyan.opacity(0.35)))
 
-                    HStack(spacing: 10) {
-                        Text("VOZ")
-                            .font(.system(.caption, design: .monospaced).weight(.bold))
-                            .foregroundStyle(.cyan)
-                        Picker("Voz", selection: $session.selectedVoicePreference) {
-                            ForEach(JarvisVoicePreference.allCases) { voice in
-                                Text(voice.label).tag(voice)
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 10) {
+                            Text("VOZ")
+                                .font(.system(.caption, design: .monospaced).weight(.bold))
+                                .foregroundStyle(.cyan)
+                            Picker("Perfil", selection: $session.selectedVoicePreference) {
+                                ForEach(JarvisVoicePreference.allCases) { voice in
+                                    Text(voice.label).tag(voice)
+                                }
                             }
+                            .pickerStyle(.segmented)
                         }
-                        .pickerStyle(.segmented)
+
+                        HStack(spacing: 10) {
+                            Picker("Voz instalada", selection: $session.selectedVoiceIdentifier) {
+                                Text("Automática do iOS").tag("")
+                                ForEach(session.availableVoiceOptions) { voice in
+                                    Text(voice.label).tag(voice.id)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            Button("Testar voz") {
+                                session.testSelectedVoice()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.cyan)
+                        }
                     }
                     .padding(12)
                     .background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))

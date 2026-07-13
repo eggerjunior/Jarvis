@@ -100,6 +100,12 @@ final class JarvisSession: ObservableObject {
             speaker.voicePreference = selectedVoicePreference
         }
     }
+    @Published var selectedVoiceIdentifier: String = UserDefaults.standard.string(forKey: "jarvis_voice_identifier") ?? "" {
+        didSet {
+            UserDefaults.standard.set(selectedVoiceIdentifier, forKey: "jarvis_voice_identifier")
+            speaker.selectedVoiceIdentifier = selectedVoiceIdentifier
+        }
+    }
     @Published var userLine = "Diga “Ei Jarvis”."
     @Published var assistantLine = "Sistemas prontos."
     @Published var modelTestLine = "Modelo ainda não testado."
@@ -122,6 +128,7 @@ final class JarvisSession: ObservableObject {
         recognizer.delegate = self
         speaker.delegate = self
         speaker.voicePreference = selectedVoicePreference
+        speaker.selectedVoiceIdentifier = selectedVoiceIdentifier
         if !availableModelsForSelectedProvider.contains(where: { $0.id == selectedModel }) {
             selectedModel = UserDefaults.standard.string(forKey: selectedProvider.modelDefaultsKey) ?? selectedProvider.defaultModel
         }
@@ -179,6 +186,16 @@ final class JarvisSession: ObservableObject {
                 modelTestLine = "Falha no teste: \(classify(error))"
             }
         }
+    }
+
+    func testSelectedVoice() {
+        speaker.voicePreference = selectedVoicePreference
+        speaker.selectedVoiceIdentifier = selectedVoiceIdentifier
+        speaker.preview("Senhor, esta é a voz selecionada para o Jarvis.", voiceIdentifier: selectedVoiceIdentifier)
+    }
+
+    var availableVoiceOptions: [JarvisVoiceOption] {
+        JarvisSpeechSynthesizer.availableVoiceOptions
     }
 
     var availableModelsForSelectedProvider: [AIModel] {

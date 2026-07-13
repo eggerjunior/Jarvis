@@ -17,6 +17,18 @@ enum JarvisVoicePreference: String, CaseIterable, Identifiable {
     }
 }
 
+struct JarvisVoiceOption: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let language: String
+    let gender: String
+    let quality: String
+
+    var label: String {
+        "\(name) · \(language) · \(gender) · \(quality)"
+    }
+}
+
 @MainActor
 protocol JarvisSpeechSynthesizerDelegate: AnyObject {
     func speechDidStart()
@@ -29,6 +41,29 @@ final class JarvisSpeechSynthesizer: NSObject, AVSpeechSynthesizerDelegate, @unc
     private let synthesizer = AVSpeechSynthesizer()
     weak var delegate: JarvisSpeechSynthesizerDelegate?
     var voicePreference: JarvisVoicePreference = .masculine
+    var selectedVoiceIdentifier: String?
+
+    static var availableVoiceOptions: [JarvisVoiceOption] {
+        AVSpeechSynthesisVoice.speechVoices()
+            .sorted { left, right in
+                if left.language.hasPrefix("pt") != right.language.hasPrefix("pt") {
+                    return left.language.hasPrefix("pt")
+                }
+                if left.language != right.language {
+                    return left.language < right.language
+                }
+                return left.name.localizedCaseInsensitiveCompare(right.name) == .orderedAscending
+            }
+            .map {
+                JarvisVoiceOption(
+                    id: $0.identifier,
+                    name: $0.name,
+                    language: $0.language,
+                    gender: genderLabel($0.gender),
+                    quality: qualityLabel($0.quality)
+                )
+            }
+    }
 
     private override init() {
         super.init()
@@ -43,12 +78,23 @@ final class JarvisSpeechSynthesizer: NSObject, AVSpeechSynthesizerDelegate, @unc
         synthesizer.speak(utterance)
     }
 
+    func preview(_ text: String, voiceIdentifier: String?) {
+        synthesizer.stopSpeaking(at: .immediate)
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.voice = explicitVoice(for: voiceIdentifier) ?? selectedVoice()
+        applyProsody(to: utterance)
+        synthesizer.speak(utterance)
+    }
+
     func stop() {
         synthesizer.stopSpeaking(at: .immediate)
     }
 
     private func selectedVoice() -> AVSpeechSynthesisVoice? {
         let voices = AVSpeechSynthesisVoice.speechVoices()
+        if let explicit = explicitVoice(for: selectedVoiceIdentifier) {
+            return explicit
+        }
 
         switch voicePreference {
         case .automatic:
@@ -103,6 +149,11 @@ final class JarvisSpeechSynthesizer: NSObject, AVSpeechSynthesizerDelegate, @unc
         return nil
     }
 
+    private func explicitVoice(for identifier: String?) -> AVSpeechSynthesisVoice? {
+        guard let identifier, !identifier.isEmpty else { return nil }
+        return AVSpeechSynthesisVoice(identifier: identifier)
+    }
+
     private func namedVoice(in voices: [AVSpeechSynthesisVoice], preferredNames: [String]) -> AVSpeechSynthesisVoice? {
         for name in preferredNames {
             if let voice = voices.first(where: { $0.language.hasPrefix("pt") && ($0.name.localizedCaseInsensitiveContains(name) || $0.identifier.localizedCaseInsensitiveContains(name)) }) {
@@ -115,6 +166,24 @@ final class JarvisSpeechSynthesizer: NSObject, AVSpeechSynthesizerDelegate, @unc
     private func preferredVoice(in voices: [AVSpeechSynthesisVoice], gender: AVSpeechSynthesisVoiceGender) -> AVSpeechSynthesisVoice? {
         voices.first { $0.language == "pt-BR" && $0.gender == gender }
             ?? voices.first { $0.language.hasPrefix("pt-") && $0.gender == gender }
+    }
+
+    private static func genderLabel(_ gender: AVSpeechSynthesisVoiceGender) -> String {
+        switch gender {
+        case .male: return "Masculina"
+        case .female: return "Feminina"
+        case .unspecified: return "Indefinida"
+        @unknown default: return "Indefinida"
+        }
+    }
+
+    private static func qualityLabel(_ quality: AVSpeechSynthesisVoiceQuality) -> String {
+        switch quality {
+        case .default: return "Padrão"
+        case .enhanced: return "Melhorada"
+        case .premium: return "Premium"
+        @unknown default: return "Padrão"
+        }
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {

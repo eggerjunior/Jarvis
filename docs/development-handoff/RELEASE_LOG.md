@@ -4,6 +4,23 @@ Generated: 2026-07-12T11:12:41-03:00
 
 Record every deploy, TestFlight/App Store upload, web publish and external processing status here.
 
+## 2026-07-13 - Installed Voice Picker 1.4.3 (Build 13)
+
+- App: Jarvis iOS
+- Bundle id: `br.app.egger.jarvis`
+- Widget extension bundle id: `br.app.egger.jarvis.widgets`
+- Version/build: `1.4.3` / `13`
+- Changes:
+  - Added a picker for installed iOS voices in Settings.
+  - Added a voice preview/test button in Settings.
+  - Persisted the explicit voice identifier in `UserDefaults` so the selected voice overrides masculine/automatic/feminine fallback logic.
+  - Voice list now shows name, language, gender and quality to make system voice differences visible.
+- Validation:
+  - `cd ios && xcodegen generate` succeeded.
+  - `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataVoicePicker143 build` succeeded.
+  - Installed and launched on iPhone 17 iOS 26.5 Simulator and captured `ios-simulator-voice-picker-2026-07-13.png`.
+- Status: implementation validated locally; TestFlight upload pending commit/push and `ios/scripts/testflight.sh`.
+
 ## 2026-07-13 - Speech Pause And Web Search 1.4.2 (Build 12)
 
 - App: Jarvis iOS
