@@ -4,6 +4,21 @@ Generated: 2026-07-12T11:12:41-03:00
 
 Record every deploy, TestFlight/App Store upload, web publish and external processing status here.
 
+## 2026-07-13 - Follow-Up And Voice Fix 1.4.1 (Build 11)
+
+- App: Jarvis iOS
+- Bundle id: `br.app.egger.jarvis`
+- Widget extension bundle id: `br.app.egger.jarvis.widgets`
+- Version/build: `1.4.1` / `11`
+- Changes:
+  - Increased the post-speech continuation window from 2 seconds to 5 seconds.
+  - Removed remaining active-flow text that mentioned 2 seconds.
+  - Reinforced masculine voice selection with known Portuguese male identifiers and a stronger lower-pitch fallback when iOS falls back to the default pt-BR voice.
+- Validation:
+  - `cd ios && xcodegen generate` succeeded.
+  - `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataVoiceFollowup build` succeeded.
+- Status: implementation validated locally; TestFlight upload pending commit/push and `ios/scripts/testflight.sh`.
+
 ## 2026-07-13 - Feedback Adjustments 1.4.0 (Build 10)
 
 - App: Jarvis iOS

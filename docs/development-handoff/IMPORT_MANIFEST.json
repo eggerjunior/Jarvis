@@ -11,7 +11,7 @@
   },
   "git": {
     "branch": "main",
-    "commit": "3950ae15",
+    "commit": "f383298",
     "status": "M docs/development-handoff/PROJECT_CONTEXT.md\n M docs/development-handoff/SCREENSHOTS.md\n M ios/Jarvis.xcodeproj/project.pbxproj\n M ios/Sources/App/JarvisSession.swift\n M ios/Sources/App/RootView.swift\n M ios/Sources/Services/AnthropicClient.swift\n M ios/Sources/Version/VersionHistory.swift\n M ios/Sources/Voice/SpeechRecognizer.swift\n M ios/Sources/Voice/SpeechSynthesizer.swift\n M ios/project.yml\n?? docs/development-handoff/screenshots/carplay-simulator-window-2026-07-12.png\n?? docs/development-handoff/screenshots/ios-simulator-feedback-adjustments-2026-07-13.png",
     "remote": "https://github.com/eggerjunior/Jarvis.git",
     "latest_commits": [
@@ -24,8 +24,8 @@
     "latest_tags": []
   },
   "version": {
-    "ios_marketing_version": "1.4.0",
-    "ios_current_project_version": "10",
+    "ios_marketing_version": "1.4.1",
+    "ios_current_project_version": "11",
     "ios_bundle_id": "br.app.egger.jarvis",
     "widget_bundle_id": "br.app.egger.jarvis.widgets"
   },

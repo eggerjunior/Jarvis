@@ -45,6 +45,10 @@ enum AIProvider: String, CaseIterable, Identifiable {
 
 @MainActor
 final class JarvisSession: ObservableObject {
+    private enum ConversationTiming {
+        static let followUpWindow: TimeInterval = 5.0
+    }
+
     struct AIModel: Identifiable, Hashable {
         let id: String
         let provider: AIProvider
@@ -63,7 +67,6 @@ final class JarvisSession: ObservableObject {
         .init(id: "anthropic/claude-sonnet-4.5", provider: .openRouter, label: "Claude Sonnet via OpenRouter", price: "via OpenRouter", note: "Claude por agregador"),
         .init(id: "google/gemini-2.5-pro", provider: .openRouter, label: "Gemini Pro via OpenRouter", price: "via OpenRouter", note: "Google por agregador")
     ]
-
 
     enum State: String {
         case idle = "Aguardando ativação"
@@ -221,7 +224,7 @@ final class JarvisSession: ObservableObject {
         let original = Array(text)
         let command = commandStart < original.count ? String(original[commandStart...]).trimmingCharacters(in: .whitespacesAndNewlines) : ""
         if command.isEmpty {
-            userLine = "Ativado. Fale em até 2 segundos."
+            userLine = "Ativado. Pode falar agora."
         } else {
             handleCommand(command)
         }
@@ -261,7 +264,7 @@ final class JarvisSession: ObservableObject {
     private func openConversationWindow() {
         clearIdleTimer()
         acceptsDirectCommand = true
-        idleTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
+        idleTimer = Timer.scheduledTimer(withTimeInterval: ConversationTiming.followUpWindow, repeats: false) { [weak self] _ in
             Task { @MainActor in
                 self?.idleTimer = nil
                 self?.acceptsDirectCommand = false
@@ -401,7 +404,7 @@ extension JarvisSession: JarvisSpeechSynthesizerDelegate {
         state = .listening
         if openFollowUpAfterSpeech {
             openConversationWindow()
-            userLine = "Responda em até 2 segundos ou diga “Ei Jarvis”."
+            userLine = "Pode responder agora, Senhor."
         } else {
             clearIdleTimer()
             userLine = "Diga “Ei Jarvis”."

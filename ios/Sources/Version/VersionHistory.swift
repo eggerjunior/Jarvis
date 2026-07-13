@@ -10,11 +10,22 @@ struct VersionEntry: Identifiable, Hashable {
 }
 
 enum VersionHistory {
-    static let currentVersionFallback = "1.4.0"
-    static let currentBuildFallback = "10"
+    static let currentVersionFallback = "1.4.1"
+    static let currentBuildFallback = "11"
     static let currentCommitFallback = "dev"
 
     static let entries: [VersionEntry] = [
+        VersionEntry(
+            version: "1.4.1",
+            build: "11",
+            date: "13/07/2026",
+            changes: [
+                "Aumentada a janela de continuidade após a fala do Jarvis para 5 segundos.",
+                "Removidos textos que ainda mencionavam 2 segundos no fluxo de ativação.",
+                "Reforçada a seleção de voz masculina com identificadores conhecidos e prosódia mais grave quando o iOS cair no fallback pt-BR."
+            ],
+            isCurrent: true
+        ),
         VersionEntry(
             version: "1.4.0",
             build: "10",
@@ -22,11 +33,11 @@ enum VersionHistory {
             changes: [
                 "Adicionado suporte ao OpenRouter como provedor alternativo de IA, com chave e modelos próprios.",
                 "Removida a consulta de gastos do teste de modelo para manter o teste simples e confiável.",
-                "Corrigida a janela de continuidade para aceitar fala iniciada até 2 segundos após a resposta do Jarvis.",
+                "Corrigida a janela de continuidade para aceitar fala iniciada após a resposta do Jarvis.",
                 "Melhorada a seleção de voz masculina/feminina com preferência por vozes nomeadas em português.",
                 "Adicionada edição das memórias do Second Brain tocando nos balões ou nos cards."
             ],
-            isCurrent: true
+            isCurrent: false
         ),
         VersionEntry(
             version: "1.3.0",

@@ -39,8 +39,7 @@ final class JarvisSpeechSynthesizer: NSObject, AVSpeechSynthesizerDelegate, @unc
         synthesizer.stopSpeaking(at: .immediate)
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = selectedVoice()
-        utterance.rate = 0.48
-        utterance.pitchMultiplier = voicePreference == .feminine ? 1.02 : 0.72
+        applyProsody(to: utterance)
         synthesizer.speak(utterance)
     }
 
@@ -55,14 +54,53 @@ final class JarvisSpeechSynthesizer: NSObject, AVSpeechSynthesizerDelegate, @unc
         case .automatic:
             return AVSpeechSynthesisVoice(language: "pt-BR")
         case .masculine:
-            return namedVoice(in: voices, preferredNames: ["Felipe", "Thiago", "Joao", "João", "Daniel"])
+            return voiceByIdentifier([
+                "com.apple.ttsbundle.Felipe-compact",
+                "com.apple.ttsbundle.Felipe-premium",
+                "com.apple.ttsbundle.Thiago-compact",
+                "com.apple.ttsbundle.Thiago-premium",
+                "com.apple.ttsbundle.Joao-compact",
+                "com.apple.ttsbundle.Joao-premium",
+                "com.apple.ttsbundle.Daniel-compact"
+            ])
+                ?? namedVoice(in: voices, preferredNames: ["Felipe", "Thiago", "Joao", "João", "Daniel"])
                 ?? preferredVoice(in: voices, gender: .male)
                 ?? AVSpeechSynthesisVoice(language: "pt-BR")
         case .feminine:
-            return namedVoice(in: voices, preferredNames: ["Luciana", "Fernanda", "Mariana"])
+            return voiceByIdentifier([
+                "com.apple.ttsbundle.Luciana-compact",
+                "com.apple.ttsbundle.Luciana-premium",
+                "com.apple.ttsbundle.Fernanda-compact",
+                "com.apple.ttsbundle.Maria-compact"
+            ])
+                ?? namedVoice(in: voices, preferredNames: ["Luciana", "Fernanda", "Mariana", "Maria"])
                 ?? preferredVoice(in: voices, gender: .female)
                 ?? AVSpeechSynthesisVoice(language: "pt-BR")
         }
+    }
+
+    private func applyProsody(to utterance: AVSpeechUtterance) {
+        switch voicePreference {
+        case .masculine:
+            utterance.rate = 0.43
+            utterance.pitchMultiplier = 0.50
+        case .automatic:
+            utterance.rate = 0.48
+            utterance.pitchMultiplier = 0.90
+        case .feminine:
+            utterance.rate = 0.50
+            utterance.pitchMultiplier = 1.12
+        }
+        utterance.volume = 1.0
+    }
+
+    private func voiceByIdentifier(_ identifiers: [String]) -> AVSpeechSynthesisVoice? {
+        for identifier in identifiers {
+            if let voice = AVSpeechSynthesisVoice(identifier: identifier) {
+                return voice
+            }
+        }
+        return nil
     }
 
     private func namedVoice(in voices: [AVSpeechSynthesisVoice], preferredNames: [String]) -> AVSpeechSynthesisVoice? {

@@ -7,10 +7,10 @@ Generated: 2026-07-13T09:42:12-03:00
 - Project: `Jarvis@apvictorio`
 - Root: `/Users/ildemareggerjunior/Projects/Jarvis@apvictorio`
 - Branch: `main`
-- Commit at start of current pass: `3950ae15`
+- Commit at start of current pass: `f383298`
 - Git status: dirty
-- iOS version: `1.4.0`
-- iOS build: `10`
+- iOS version: `1.4.1`
+- iOS build: `11`
 - iOS bundle id: `br.app.egger.jarvis`
 - Widget extension bundle id: `br.app.egger.jarvis.widgets`
 - Detected stack: swift, node
@@ -26,7 +26,7 @@ Jarvis is a personal voice assistant for Ildemar, built first as a native iOS ap
 - Settings sheet for provider selection, provider-specific API key, model selection/testing and voice preference.
 - Model test reports provider, requested model, response model, token usage and returned text; cost/spend lookup was removed because it was not reliable for the normal user key flow.
 - Second Brain notes are shown in a visual graph and a card grid; tapping graph bubbles or cards opens an editor for title, area and memory/context text.
-- After Jarvis finishes speaking with a follow-up expected, speech that starts within 2 seconds keeps the conversation window open even if final transcription arrives later.
+- After Jarvis finishes speaking with a follow-up expected, speech that starts within a 5-second continuation window keeps the conversation open even if final transcription arrives later.
 - Version footer exposes app version, build date and git commit.
 - Widget Extension target `JarvisWidgets` provides a small Jarvis status widget.
 - Live Activity base is implemented with ActivityKit attributes, controller methods and widget rendering, but is not started automatically from production UI yet.
@@ -85,8 +85,8 @@ Detected version/build fields:
 
 ```json
 {
-  "ios_marketing_version": "1.4.0",
-  "ios_current_project_version": "10",
+  "ios_marketing_version": "1.4.1",
+  "ios_current_project_version": "11",
   "ios_bundle_id": "br.app.egger.jarvis",
   "widget_bundle_id": "br.app.egger.jarvis.widgets",
   "widget_bundle_resource_id": "Z7SGYGS278"
@@ -108,6 +108,8 @@ For distributed iOS builds, use `ios/project.yml` as the source of truth, update
 - 2026-07-13: Extracted and reviewed TestFlight feedback zips `testflight_feedback-2.zip` through `testflight_feedback-6.zip`.
 - 2026-07-13: `cd ios && xcodegen generate` succeeded.
 - 2026-07-13: `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataFeedback build` succeeded for version `1.4.0` build `10`.
+- 2026-07-13: `cd ios && xcodegen generate` succeeded for version `1.4.1` build `11`.
+- 2026-07-13: `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataVoiceFollowup build` succeeded.
 - 2026-07-13: Installed and launched Jarvis on iPhone 17 iOS 26.5 Simulator (`067DE2A0-9E13-49E6-AFA5-C78D3155EA94`) and captured `ios-simulator-feedback-adjustments-2026-07-13.png`.
 - 2026-07-12: Installed Additional Tools for Xcode 26.6 CarPlay Simulator locally. CarPlay Simulator opens, but it connects to a real/remote iPhone/iPad, not to CoreSimulator iOS devices.
 
@@ -115,14 +117,14 @@ For distributed iOS builds, use `ios/project.yml` as the source of truth, update
 
 - Added OpenRouter as a second provider instead of replacing Anthropic, preserving the known working direct Claude flow.
 - Removed cost/spend lookup from model testing because normal API keys do not reliably have admin-cost access and the feedback asked to remove that noisy result.
-- Kept the follow-up window at 2 seconds, but now partial speech detected inside that window keeps direct-command mode active until final transcription arrives.
+- Increased the follow-up window from 2 seconds to 5 seconds; partial speech detected inside that window keeps direct-command mode active until final transcription arrives.
 - Added Second Brain editing in-place through graph bubbles and grid cards rather than creating a separate memory management screen.
-- Voice preference now tries named Portuguese voices first before falling back to gender metadata and default pt-BR voice.
+- Voice preference now tries known Portuguese male/female voice identifiers and names first; masculine fallback applies lower pitch and slower rate when iOS still falls back to the default pt-BR voice.
 
 ## Known Risks And Pending Work
 
 - OpenRouter responses depend on the selected model slug and account credit; the app stores only the API key and does not yet fetch the live OpenRouter model catalog.
-- AVSpeechSynthesisVoice availability varies by device and installed voices; masculine selection is improved but still depends on installed system voices.
+- AVSpeechSynthesisVoice availability varies by device and installed voices; masculine selection now uses stronger fallback prosody, but a truly native male pt-BR timbre still depends on system voice availability.
 - CarPlay app entitlement is pending Apple review. Full CarPlay app UI cannot be tested as a real CarPlay app until Apple approves the appropriate entitlement and provisioning profile.
 - CarPlay Simulator cannot validate this widget using only the iOS Simulator. To test in CarPlay Simulator, use an iPhone with the build installed, connect/unlock/trust it, then select/connect that device in CarPlay Simulator.
 - Live Activity still needs product behavior: decide when to start, update and end it from `JarvisSession`.
