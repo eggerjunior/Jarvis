@@ -116,6 +116,7 @@ For distributed iOS builds, use `ios/project.yml` as the source of truth, update
 - 2026-07-13: `cd ios && xcodegen generate` succeeded for version `1.4.4` build `14`.
 - 2026-07-13: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -showBuildSettings -configuration Debug -destination 'generic/platform=iOS Simulator'` confirmed `MARKETING_VERSION = 1.4.4`, `CURRENT_PROJECT_VERSION = 14`, and `PRODUCT_BUNDLE_IDENTIFIER = br.app.egger.jarvis`.
 - 2026-07-13: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -destination 'generic/platform=iOS Simulator' -configuration Debug build` succeeded for version `1.4.4` build `14`; build logs validated `JarvisWidgets.appex` was copied into `Jarvis.app/PlugIns`.
+- 2026-07-13: `cd ios && ./scripts/testflight.sh` archived and uploaded version `1.4.4` build `14` successfully to App Store Connect/TestFlight; binary commit `3435f245`, package processing started.
 - 2026-07-13: Installed and launched Jarvis on iPhone 17 iOS 26.5 Simulator (`067DE2A0-9E13-49E6-AFA5-C78D3155EA94`) and captured `ios-simulator-auto-activation-2026-07-13.png`; screenshot confirms automatic startup request reaches the iOS speech-recognition permission flow and the button shows `Ativando`.
 - 2026-07-13: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -destination 'generic/platform=iOS Simulator' -configuration Debug build` succeeded after preparing the audio session before first speech synthesis.
 - 2026-07-13: Extracted and reviewed TestFlight feedback zips `testflight_feedback-2.zip` through `testflight_feedback-6.zip`.

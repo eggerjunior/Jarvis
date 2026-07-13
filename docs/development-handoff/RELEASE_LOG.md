@@ -10,7 +10,7 @@ Record every deploy, TestFlight/App Store upload, web publish and external proce
 - Bundle id: `br.app.egger.jarvis`
 - Widget extension bundle id: `br.app.egger.jarvis.widgets`
 - Version/build: `1.4.4` / `14`
-- Binary commit: `PENDING_COMMIT`
+- Binary commit: `3435f245`
 - Changes:
   - Jarvis now attempts activation automatically when the app opens.
   - Jarvis attempts activation again when returning to foreground.
@@ -23,8 +23,8 @@ Record every deploy, TestFlight/App Store upload, web publish and external proce
   - `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -destination 'generic/platform=iOS Simulator' -configuration Debug build` succeeded and validated `JarvisWidgets.appex` is embedded under `Jarvis.app/PlugIns`.
   - Installed and launched on iPhone 17 iOS 26.5 Simulator and captured `ios-simulator-auto-activation-2026-07-13.png`.
 - Web parity: no web deploy for this release because the change depends on native iOS foreground lifecycle, speech permission and `AVAudioSession` behavior.
-- Status: prepared for TestFlight upload at 2026-07-13 17:36 America/Sao_Paulo.
-- Apple processing: pending upload.
+- Status: uploaded successfully to App Store Connect/TestFlight at 2026-07-13 17:39 America/Sao_Paulo.
+- Apple processing: uploaded package is processing.
 
 ## 2026-07-13 - Installed Voice Picker 1.4.3 (Build 13)
 
