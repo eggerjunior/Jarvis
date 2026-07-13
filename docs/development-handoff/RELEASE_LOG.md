@@ -10,6 +10,7 @@ Record every deploy, TestFlight/App Store upload, web publish and external proce
 - Bundle id: `br.app.egger.jarvis`
 - Widget extension bundle id: `br.app.egger.jarvis.widgets`
 - Version/build: `1.4.3` / `13`
+- Binary commit: `f3dcee5c`
 - Changes:
   - Added a picker for installed iOS voices in Settings.
   - Added a voice preview/test button in Settings.
@@ -19,7 +20,9 @@ Record every deploy, TestFlight/App Store upload, web publish and external proce
   - `cd ios && xcodegen generate` succeeded.
   - `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataVoicePicker143 build` succeeded.
   - Installed and launched on iPhone 17 iOS 26.5 Simulator and captured `ios-simulator-voice-picker-2026-07-13.png`.
-- Status: implementation validated locally; TestFlight upload pending commit/push and `ios/scripts/testflight.sh`.
+  - `cd ios && ./scripts/testflight.sh` archived and uploaded successfully.
+- Status: uploaded successfully to App Store Connect/TestFlight at 2026-07-13 11:14 America/Sao_Paulo.
+- Apple processing: uploaded package is processing.
 
 ## 2026-07-13 - Speech Pause And Web Search 1.4.2 (Build 12)
 
