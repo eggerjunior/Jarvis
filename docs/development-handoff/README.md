@@ -16,7 +16,7 @@ This folder is the portable project handoff for humans and AI development tools.
 
 - Project: `Jarvis@apvictorio`
 - Branch: `main`
-- Commit: pending release commit
+- Commit: `6bc2d32`
 - iOS app version: `1.4.2`
 - iOS build: `12`
 - iOS bundle id: `br.app.egger.jarvis`

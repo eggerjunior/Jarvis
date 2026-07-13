@@ -10,6 +10,7 @@ Record every deploy, TestFlight/App Store upload, web publish and external proce
 - Bundle id: `br.app.egger.jarvis`
 - Widget extension bundle id: `br.app.egger.jarvis.widgets`
 - Version/build: `1.4.2` / `12`
+- Binary commit: `6bc2d325`
 - Source feedback: TestFlight feedback `testflight_feedback.zip` for version `1.4.1` build `11`.
 - Changes:
   - Increased the in-command speech silence threshold from 1 second to 3 seconds.
@@ -19,7 +20,9 @@ Record every deploy, TestFlight/App Store upload, web publish and external proce
 - Validation:
   - `cd ios && xcodegen generate` succeeded.
   - `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataFeedback142 build` succeeded.
-- Status: implementation validated locally; TestFlight upload pending commit/push and `ios/scripts/testflight.sh`.
+  - `cd ios && ./scripts/testflight.sh` archived and uploaded successfully.
+- Status: uploaded successfully to App Store Connect/TestFlight at 2026-07-13 11:00 America/Sao_Paulo.
+- Apple processing: uploaded package is processing.
 
 ## 2026-07-13 - Follow-Up And Voice Fix 1.4.1 (Build 11)
 
