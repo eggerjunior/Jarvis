@@ -69,6 +69,9 @@ xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
   -destination 'generic/platform=iOS' \
   -archivePath "$ARCH_PATH" \
   -allowProvisioningUpdates \
+  -authenticationKeyPath "$ASC_KEY_PATH" \
+  -authenticationKeyID "$ASC_KEY_ID" \
+  -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
   GIT_COMMIT="$GIT_COMMIT" \
   archive
 
