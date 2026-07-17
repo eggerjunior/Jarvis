@@ -4,6 +4,24 @@ Generated: 2026-07-12T11:12:41-03:00
 
 Record every deploy, TestFlight/App Store upload, web publish and external processing status here.
 
+## 2026-07-13 - Web Local Productivity Hub 1.3.0 (Build 8)
+
+- App: Jarvis web local
+- Package id: `jarvis-web`
+- Version/build: `1.3.0` / `8`
+- Commit: not committed during this working turn
+- Changes:
+  - Added no-server local Agenda, E-mails, Noticias and Morning Digest tabs to `jarvis.html`.
+  - Preserved original voice, wake word, Second Brain, API key storage, model selector and neural graph.
+  - Added local voice routing for `bom dia`, agenda, next appointment, e-mails and news.
+  - Added compact local agenda/e-mail/news context to the system prompt.
+  - Removed the prior local-server/antenna direction entirely; no `server.js` is required.
+- Validation:
+  - Embedded script from `jarvis.html` passed `node --check`.
+  - Static ID/version check confirmed new hub elements and `1.3.0` build `8`.
+- Status: local files updated; no web deploy or public site publication was performed.
+- iOS parity: not implemented in this pass because the requested correction was specifically for the local web version without a server.
+
 ## 2026-07-13 - Auto Activation 1.4.4 (Build 14)
 
 - App: Jarvis iOS

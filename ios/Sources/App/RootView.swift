@@ -36,6 +36,9 @@ struct RootView: View {
             guard newPhase == .active else { return }
             session.start()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .jarvisCarPlayActivate)) { _ in
+            session.start()
+        }
         .sheet(isPresented: $showingVersionHistory) {
             VersionHistoryView()
         }

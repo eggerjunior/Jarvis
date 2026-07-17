@@ -1,16 +1,16 @@
 # Project Context
 
-Generated: 2026-07-13T17:19:29-03:00
+Generated: 2026-07-17T13:38:01-03:00
 
 ## Snapshot
 
 - Project: `Jarvis@apvictorio`
 - Root: `/Users/ildemareggerjunior/Projects/Jarvis@apvictorio`
 - Branch: `main`
-- Commit: `690f9117`
+- Commit: `dd450094`
 - Git status: dirty
-- iOS version: `1.4.4`
-- iOS build: `14`
+- iOS version: `1.5.0`
+- iOS build: `15`
 - iOS bundle id: `br.app.egger.jarvis`
 - Widget extension bundle id: `br.app.egger.jarvis.widgets`
 - Detected stack: swift, node
@@ -35,11 +35,12 @@ Jarvis is a personal voice assistant for Ildemar, built first as a native iOS ap
 - Version footer exposes app version, build date and git commit.
 - Widget Extension target `JarvisWidgets` provides a small Jarvis status widget.
 - Live Activity base is implemented with ActivityKit attributes, controller methods and widget rendering, but is not started automatically from production UI yet.
+- CarPlay scene (`CarPlaySceneDelegate`) shows a list template with an item that activates the Jarvis voice session from the car screen via `NotificationCenter` (`.jarvisCarPlayActivate`), reusing the existing `JarvisSession` instance in `RootView`.
 
 ## Architecture
 
-- `ios/project.yml` is the XcodeGen source of truth for app and extension targets.
-- `ios/Sources/App/` contains the SwiftUI app entry, root UI, app session state and the Live Activity controller.
+- `ios/project.yml` is the XcodeGen source of truth for app and extension targets (settings, Info.plist properties, `CODE_SIGN_ENTITLEMENTS`).
+- `ios/Sources/App/` contains the SwiftUI app entry, root UI, app session state, the Live Activity controller and the CarPlay scene delegate.
 - `ios/Sources/Services/AnthropicClient.swift` currently contains the multi-provider AI client for Anthropic Messages API and OpenRouter chat completions.
 - `ios/Sources/Voice/` contains speech recognition and synthesis wrappers.
 - `ios/Sources/Brain/` contains the local Second Brain model.
@@ -52,6 +53,8 @@ Jarvis is a personal voice assistant for Ildemar, built first as a native iOS ap
 - `ios/project.yml`
 - `ios/Sources/App/JarvisSession.swift`
 - `ios/Sources/App/RootView.swift`
+- `ios/Sources/App/CarPlaySceneDelegate.swift`
+- `ios/Sources/Jarvis.entitlements`
 - `ios/Sources/Services/AnthropicClient.swift`
 - `ios/Sources/Voice/SpeechRecognizer.swift`
 - `ios/Sources/Voice/SpeechSynthesizer.swift`
@@ -83,7 +86,7 @@ Jarvis is a personal voice assistant for Ildemar, built first as a native iOS ap
 - Apple Developer Team ID: `E743636TCJ`.
 - iOS app bundle id: `br.app.egger.jarvis`.
 - Widget extension bundle id: `br.app.egger.jarvis.widgets` (`Z7SGYGS278` in Apple Developer).
-- CarPlay entitlement request was submitted manually on 2026-07-12 and is pending Apple review.
+- CarPlay entitlement (`CarPlay Voice Based Conversation`, capability key `com.apple.developer.carplay-voice-based-conversation`) was submitted on 2026-07-12 and was confirmed **approved** by Apple on 2026-07-17: enabled directly on the `br.app.egger.jarvis` App ID in Certificates, Identifiers & Profiles and wired into the app in this same release.
 - TestFlight/App Store release scripts live in `ios/scripts/`; never commit `ios/scripts/asc.env` or `.p8` files.
 
 ## Versioning And Release Rules
@@ -92,8 +95,8 @@ Detected version/build fields:
 
 ```json
 {
-  "ios_marketing_version": "1.4.4",
-  "ios_current_project_version": "14",
+  "ios_marketing_version": "1.5.0",
+  "ios_current_project_version": "15",
   "ios_bundle_id": "br.app.egger.jarvis",
   "widget_bundle_id": "br.app.egger.jarvis.widgets",
   "widget_bundle_resource_id": "Z7SGYGS278"
@@ -112,55 +115,38 @@ For distributed iOS builds, use `ios/project.yml` as the source of truth, update
 
 ## Testing And Validation
 
+- 2026-07-17: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -destination 'generic/platform=iOS' -configuration Debug CODE_SIGNING_ALLOWED=NO build` succeeded after hand-adding `CarPlaySceneDelegate.swift`, `Jarvis.entitlements` and the CarPlay scene manifest to `project.pbxproj`.
+- 2026-07-17: `cd ios && xcodegen generate` succeeded for version `1.5.0` build `15` after moving the CarPlay entitlement/Info.plist scene manifest into `project.yml` as the source of truth.
+- 2026-07-17: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -destination 'generic/platform=iOS' -configuration Debug CODE_SIGNING_ALLOWED=NO build` succeeded again on the XcodeGen-regenerated project.
 - 2026-07-13: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -destination 'generic/platform=iOS Simulator' -configuration Debug build` succeeded after adding automatic activation on app open/foreground.
-- 2026-07-13: `cd ios && xcodegen generate` succeeded for version `1.4.4` build `14`.
-- 2026-07-13: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -showBuildSettings -configuration Debug -destination 'generic/platform=iOS Simulator'` confirmed `MARKETING_VERSION = 1.4.4`, `CURRENT_PROJECT_VERSION = 14`, and `PRODUCT_BUNDLE_IDENTIFIER = br.app.egger.jarvis`.
-- 2026-07-13: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -destination 'generic/platform=iOS Simulator' -configuration Debug build` succeeded for version `1.4.4` build `14`; build logs validated `JarvisWidgets.appex` was copied into `Jarvis.app/PlugIns`.
 - 2026-07-13: `cd ios && ./scripts/testflight.sh` archived and uploaded version `1.4.4` build `14` successfully to App Store Connect/TestFlight; binary commit `3435f245`, package processing started.
-- 2026-07-13: Installed and launched Jarvis on iPhone 17 iOS 26.5 Simulator (`067DE2A0-9E13-49E6-AFA5-C78D3155EA94`) and captured `ios-simulator-auto-activation-2026-07-13.png`; screenshot confirms automatic startup request reaches the iOS speech-recognition permission flow and the button shows `Ativando`.
-- 2026-07-13: `xcodebuild -project ios/Jarvis.xcodeproj -scheme Jarvis -destination 'generic/platform=iOS Simulator' -configuration Debug build` succeeded after preparing the audio session before first speech synthesis.
+- 2026-07-13: Installed and launched Jarvis on iPhone 17 iOS 26.5 Simulator (`067DE2A0-9E13-49E6-AFA5-C78D3155EA94`) and captured `ios-simulator-auto-activation-2026-07-13.png`.
 - 2026-07-13: Extracted and reviewed TestFlight feedback zips `testflight_feedback-2.zip` through `testflight_feedback-6.zip`.
-- 2026-07-13: `cd ios && xcodegen generate` succeeded.
-- 2026-07-13: `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataFeedback build` succeeded for version `1.4.0` build `10`.
-- 2026-07-13: `cd ios && xcodegen generate` succeeded for version `1.4.1` build `11`.
-- 2026-07-13: `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataVoiceFollowup build` succeeded.
-- 2026-07-13: `cd ios && ./scripts/testflight.sh` archived and uploaded version `1.4.1` build `11` successfully to App Store Connect/TestFlight.
-- 2026-07-13: Extracted and reviewed TestFlight feedback `testflight_feedback.zip` for version `1.4.1` build `11`: speech recognition finalized after a mid-sentence pause and current-information questions needed web search.
-- 2026-07-13: `cd ios && xcodegen generate` succeeded for version `1.4.2` build `12`.
-- 2026-07-13: `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataFeedback142 build` succeeded.
-- 2026-07-13: `cd ios && ./scripts/testflight.sh` archived and uploaded version `1.4.2` build `12` successfully to App Store Connect/TestFlight.
-- 2026-07-13: `cd ios && xcodegen generate` succeeded for version `1.4.3` build `13`.
-- 2026-07-13: `cd ios && xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ../build/DerivedDataVoicePicker143 build` succeeded.
-- 2026-07-13: `cd ios && ./scripts/testflight.sh` archived and uploaded version `1.4.3` build `13` successfully to App Store Connect/TestFlight.
-- 2026-07-13: Installed and launched Jarvis on iPhone 17 iOS 26.5 Simulator (`067DE2A0-9E13-49E6-AFA5-C78D3155EA94`) and captured `ios-simulator-feedback-adjustments-2026-07-13.png`.
 - 2026-07-12: Installed Additional Tools for Xcode 26.6 CarPlay Simulator locally. CarPlay Simulator opens, but it connects to a real/remote iPhone/iPad, not to CoreSimulator iOS devices.
 
 ## Recent Decisions
 
-- RootView now calls `session.start()` when the main view task first runs and when `scenePhase` returns to `.active`, so opening/reopening the app attempts activation automatically.
+- CarPlay entitlement approved by Apple on 2026-07-17; enabled the `CarPlay Voice Based Conversation` capability on the `br.app.egger.jarvis` App ID and added `Jarvis.entitlements` (`com.apple.developer.carplay-voice-based-conversation = true`), a `CPTemplateApplicationSceneSessionRoleApplication` scene entry in Info.plist, `UIBackgroundModes: audio`, and `CarPlaySceneDelegate.swift` implementing the standard `CPTemplateApplicationSceneDelegate` connect/disconnect flow with a `CPListTemplate` that activates the existing `JarvisSession` via `NotificationCenter`. The exact delegate API surface for the newer "voice based conversation" CarPlay interaction (beyond standard template connect) was not fully verified against the latest CarPlay SDK docs/headers and may need refinement once tested against a real CarPlay-connected device or the CarPlay Simulator.
+- This is a native-only OS integration (CarPlay has no web equivalent), so the web surface (`jarvis.html`) was intentionally not touched for this change.
+- RootView now calls `session.start()` when the main view task first runs and when `scenePhase` returns to `.active`, and also when a CarPlay activation notification is received.
 - `JarvisSession.start()` now tracks `isStarting` and a request UUID to avoid duplicate permission/activation flows and to ignore stale async permission results after a stop.
 - The activation button shows `Ativando` and is disabled while permissions/activation are in flight.
-- Version `1.4.4` build `14` is a native iOS release; the web surface was not changed because automatic foreground activation, iOS speech permissions and `AVAudioSession` have no equivalent in the current web surface.
 - Prepared the `AVAudioSession` inside `JarvisSpeechSynthesizer` before each `speak`/`preview` call so the startup utterance is not lost on the first activation after launch or permission setup.
-- Avoided calling `stopSpeaking(at:)` before the first utterance unless the synthesizer is already speaking, reducing the chance of cancelling an initial queued utterance.
 - Added OpenRouter as a second provider instead of replacing Anthropic, preserving the known working direct Claude flow.
 - Removed cost/spend lookup from model testing because normal API keys do not reliably have admin-cost access and the feedback asked to remove that noisy result.
 - Increased the follow-up window from 2 seconds to 5 seconds; partial speech detected inside that window keeps direct-command mode active until final transcription arrives.
-- Increased in-command silence tolerance from 1 second to 3 seconds, with a 5-second wait for partial phrases that likely continue.
 - Routed current-information questions to OpenRouter web search instead of relying on static model knowledge.
 - Added an explicit installed-voice picker because iOS system voice availability varies and automatic male selection can fall back to a female/default voice.
 - Added Second Brain editing in-place through graph bubbles and grid cards rather than creating a separate memory management screen.
-- Voice preference now tries known Portuguese male/female voice identifiers and names first; masculine fallback applies lower pitch and slower rate when iOS still falls back to the default pt-BR voice.
 
 ## Known Risks And Pending Work
 
+- CarPlay scene has not yet been validated on a real CarPlay-connected device or in CarPlay Simulator (CarPlay Simulator connects to a real/remote iPhone/iPad, not CoreSimulator devices); do this before relying on the feature in daily use.
+- The CarPlay delegate implements the standard `CPTemplateApplicationSceneDelegate` connect/disconnect + `CPListTemplate` flow; if Apple's "Voice Based Conversation" capability expects additional delegate methods or template types beyond this baseline, they still need to be added once verified against current CarPlay framework docs/headers in a recent Xcode SDK.
 - First launch after install may show iOS speech/microphone permission prompts before the app can become fully active and speak.
-- `simctl privacy booted grant microphone br.app.egger.jarvis` returned `Operation not permitted` in the local simulator, so the screenshot validation captures the permission request rather than the fully granted listening state.
-- OpenRouter responses and web search depend on the selected model slug, account credit and OpenRouter server-tool availability; the app stores only the API key and does not yet fetch the live OpenRouter model catalog.
+- OpenRouter responses and web search depend on the selected model slug, account credit and OpenRouter server-tool availability.
 - Current-information questions need an OpenRouter key; Anthropic-only configuration cannot perform web search from the app.
-- AVSpeechSynthesisVoice availability varies by device and installed voices; the user can now explicitly select and test installed voices, but a truly native male pt-BR timbre still depends on system voice availability.
-- CarPlay app entitlement is pending Apple review. Full CarPlay app UI cannot be tested as a real CarPlay app until Apple approves the appropriate entitlement and provisioning profile.
-- CarPlay Simulator cannot validate this widget using only the iOS Simulator. To test in CarPlay Simulator, use an iPhone with the build installed, connect/unlock/trust it, then select/connect that device in CarPlay Simulator.
+- AVSpeechSynthesisVoice availability varies by device and installed voices.
 - Live Activity still needs product behavior: decide when to start, update and end it from `JarvisSession`.
 - Widget currently does not read live Jarvis state. If real data is desired, add an App Group and a privacy-conscious shared state model.
 

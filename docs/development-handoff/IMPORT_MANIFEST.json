@@ -1,6 +1,6 @@
 {
   "schema": "project-handoff-docs/v1",
-  "generated_at": "2026-07-13T17:36:45-03:00",
+  "generated_at": "2026-07-17T13:38:01-03:00",
   "project": {
     "name": "Jarvis@apvictorio",
     "root": "/Users/ildemareggerjunior/Projects/Jarvis@apvictorio",
@@ -11,21 +11,21 @@
   },
   "git": {
     "branch": "main",
-    "commit": "690f9117",
-    "status": "M docs/development-handoff/IMPORT_MANIFEST.json\n M docs/development-handoff/PROJECT_CONTEXT.md\n M docs/development-handoff/README.md\n M docs/development-handoff/SCREENSHOTS.md\n M ios/Sources/App/JarvisSession.swift\n M ios/Sources/App/RootView.swift\n M ios/Sources/Voice/SpeechSynthesizer.swift\n?? docs/development-handoff/CARPLAY_WIDGET_CONTEXT.md\n?? docs/development-handoff/screenshots/carplay-refocus-after-settings-2026-07-13.png",
+    "commit": "dd450094",
+    "status": "M docs/development-handoff/IMPORT_MANIFEST.json\n M docs/development-handoff/PROJECT_CONTEXT.md\n M docs/development-handoff/README.md\n M docs/development-handoff/RELEASE_LOG.md\n M docs/development-handoff/SCREENSHOTS.md\n M ios/Jarvis.xcodeproj/project.pbxproj\n M ios/Sources/App/RootView.swift\n M ios/Sources/Info.plist\n M ios/Sources/Version/VersionHistory.swift\n M ios/project.yml\n M jarvis.html\n M package.json\n?? ios/Sources/App/CarPlaySceneDelegate.swift\n?? ios/Sources/Jarvis.entitlements",
     "remote": "https://github.com/eggerjunior/Jarvis.git",
     "latest_commits": [
+      "dd45009 Record TestFlight upload for 1.4.4",
+      "3435f24 Release Jarvis 1.4.4 auto activation",
       "690f911 Record TestFlight upload for 1.4.3",
       "f3dcee5 Add installed voice picker",
-      "f5acf97 Record TestFlight upload for 1.4.2",
-      "6bc2d32 Improve speech pauses and add web search routing",
-      "a86b907 Record TestFlight upload for 1.4.1"
+      "f5acf97 Record TestFlight upload for 1.4.2"
     ],
     "latest_tags": []
   },
   "version": {
-    "ios_marketing_version": "1.4.4",
-    "ios_current_project_version": "14",
+    "ios_marketing_version": "1.5.0",
+    "ios_current_project_version": "15",
     "ios_bundle_id": "br.app.egger.jarvis",
     "widget_bundle_id": "br.app.egger.jarvis.widgets"
   },
@@ -40,6 +40,8 @@
     "ios/project.yml",
     "ios/Sources/App/JarvisSession.swift",
     "ios/Sources/App/RootView.swift",
+    "ios/Sources/App/CarPlaySceneDelegate.swift",
+    "ios/Sources/Jarvis.entitlements",
     "ios/Sources/Services/AnthropicClient.swift",
     "ios/Sources/Voice/SpeechRecognizer.swift",
     "ios/Sources/Voice/SpeechSynthesizer.swift",

@@ -1,6 +1,6 @@
 # Development Handoff: Jarvis@apvictorio
 
-Generated: 2026-07-13T17:19:29-03:00
+Generated: 2026-07-17T13:38:01-03:00
 
 This folder is the portable project handoff for humans and AI development tools.
 
@@ -16,9 +16,9 @@ This folder is the portable project handoff for humans and AI development tools.
 
 - Project: `Jarvis@apvictorio`
 - Branch: `main`
-- Commit: `690f9117`
-- iOS app version: `1.4.4`
-- iOS build: `14`
+- Commit: `dd450094`
+- iOS app version: `1.5.0`
+- iOS build: `15`
 - iOS bundle id: `br.app.egger.jarvis`
 - Widget extension bundle id: `br.app.egger.jarvis.widgets`
 - Repo: `https://github.com/eggerjunior/Jarvis.git`
@@ -28,6 +28,8 @@ This folder is the portable project handoff for humans and AI development tools.
 - `ios/project.yml`
 - `ios/Sources/App/JarvisSession.swift`
 - `ios/Sources/App/RootView.swift`
+- `ios/Sources/App/CarPlaySceneDelegate.swift`
+- `ios/Sources/Jarvis.entitlements`
 - `ios/Sources/Services/AnthropicClient.swift`
 - `ios/Sources/Voice/SpeechRecognizer.swift`
 - `ios/Sources/Voice/SpeechSynthesizer.swift`

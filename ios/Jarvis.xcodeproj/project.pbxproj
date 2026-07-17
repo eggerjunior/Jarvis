@@ -22,6 +22,7 @@
 		CA456756E3428BDF2092731E /* VersionHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26D436C8CED43FC1F28A4F04 /* VersionHistory.swift */; };
 		D339DA7423BBFE0E024A7D88 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C38BE911E6F3BFCA27280CB2 /* RootView.swift */; };
 		D8E703A3745F34B32D72AC76 /* JarvisWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B246EA3463F17D6165106734 /* JarvisWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E5A8987746FC289084AB0582 /* CarPlaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8136CA75BA7B97D9263A2D68 /* CarPlaySceneDelegate.swift */; };
 		E7F577CAC818C4E83F138CBB /* VersionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0439C37AEEE342EBD99A9F2 /* VersionManager.swift */; };
 		F391BF68E90D6B77E9EB2D1F /* SpeechRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C17A0CB2732DDD2F86D4A9 /* SpeechRecognizer.swift */; };
 /* End PBXBuildFile section */
@@ -56,6 +57,7 @@
 		3313C083399D6E13E62D7E10 /* JarvisApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JarvisApp.swift; sourceTree = "<group>"; };
 		39D8CD2CBC5671EE603EAE8C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		47DA69ADA1BD918ED21BBAAA /* JarvisSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JarvisSession.swift; sourceTree = "<group>"; };
+		8136CA75BA7B97D9263A2D68 /* CarPlaySceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlaySceneDelegate.swift; sourceTree = "<group>"; };
 		83B39A90224E1F58185D43DF /* AnthropicClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnthropicClient.swift; sourceTree = "<group>"; };
 		85EE94DF3E48710D508EE302 /* VersionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionHistoryView.swift; sourceTree = "<group>"; };
 		92D261B959126387C7A75322 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -68,6 +70,7 @@
 		C38BE911E6F3BFCA27280CB2 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		C7009E1F83B86EDADEC31D44 /* JarvisWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JarvisWidgets.swift; sourceTree = "<group>"; };
 		CBDA53C6BA1389DD98BB79A0 /* SpeechSynthesizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechSynthesizer.swift; sourceTree = "<group>"; };
+		E30A6EBB1413A5229894124C /* Jarvis.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Jarvis.entitlements; sourceTree = "<group>"; };
 		F0439C37AEEE342EBD99A9F2 /* VersionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionManager.swift; sourceTree = "<group>"; };
 		F2EA89B09E63D9954B6EA5A4 /* Jarvis.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Jarvis.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -95,6 +98,7 @@
 			children = (
 				39D8CD2CBC5671EE603EAE8C /* Assets.xcassets */,
 				981EF0D9D4B4DC9D2909FAA6 /* Info.plist */,
+				E30A6EBB1413A5229894124C /* Jarvis.entitlements */,
 				D66D607621269C7D2DC56249 /* App */,
 				12014CB3E0C05985E192E955 /* Brain */,
 				06D58782B2463E76B9ED8CFC /* Services */,
@@ -145,6 +149,7 @@
 		D66D607621269C7D2DC56249 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				8136CA75BA7B97D9263A2D68 /* CarPlaySceneDelegate.swift */,
 				3313C083399D6E13E62D7E10 /* JarvisApp.swift */,
 				A504D74EBB812B9692875B8F /* JarvisLiveActivityController.swift */,
 				47DA69ADA1BD918ED21BBAAA /* JarvisSession.swift */,
@@ -275,6 +280,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1628B411F6F644563E80C1C4 /* AnthropicClient.swift in Sources */,
+				E5A8987746FC289084AB0582 /* CarPlaySceneDelegate.swift in Sources */,
 				C284CCED1E566707D334A3EC /* JarvisApp.swift in Sources */,
 				309299539C76A2C08720A972 /* JarvisLiveActivityAttributes.swift in Sources */,
 				B94D75AE7F729644FE0663F0 /* JarvisLiveActivityController.swift in Sources */,
@@ -305,6 +311,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/Jarvis.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = Sources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -367,7 +374,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = E743636TCJ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -388,7 +395,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GIT_COMMIT = dev;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.4.4;
+				MARKETING_VERSION = 1.5.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -404,6 +411,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/Jarvis.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = Sources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -466,7 +474,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = E743636TCJ;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -481,7 +489,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GIT_COMMIT = dev;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.4.4;
+				MARKETING_VERSION = 1.5.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

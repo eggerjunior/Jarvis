@@ -10,11 +10,22 @@ struct VersionEntry: Identifiable, Hashable {
 }
 
 enum VersionHistory {
-    static let currentVersionFallback = "1.4.4"
-    static let currentBuildFallback = "14"
+    static let currentVersionFallback = "1.5.0"
+    static let currentBuildFallback = "15"
     static let currentCommitFallback = "dev"
 
     static let entries: [VersionEntry] = [
+        VersionEntry(
+            version: "1.5.0",
+            build: "15",
+            date: "17/07/2026",
+            changes: [
+                "Adicionado suporte a CarPlay (entitlement Voice Based Conversation aprovado pela Apple).",
+                "Nova cena de CarPlay com ativação do Jarvis por toque na tela do carro.",
+                "Modo de fundo de áudio habilitado para uso contínuo conectado ao CarPlay."
+            ],
+            isCurrent: true
+        ),
         VersionEntry(
             version: "1.4.4",
             build: "14",
@@ -25,7 +36,7 @@ enum VersionHistory {
                 "Adicionado estado Ativando para evitar múltiplas ativações simultâneas.",
                 "Preparada a sessão de áudio antes da fala inicial para evitar silêncio no primeiro acionamento."
             ],
-            isCurrent: true
+            isCurrent: false
         ),
         VersionEntry(
             version: "1.4.3",
