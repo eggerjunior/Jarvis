@@ -10,11 +10,21 @@ struct VersionEntry: Identifiable, Hashable {
 }
 
 enum VersionHistory {
-    static let currentVersionFallback = "1.6.0"
-    static let currentBuildFallback = "16"
+    static let currentVersionFallback = "1.6.1"
+    static let currentBuildFallback = "17"
     static let currentCommitFallback = "dev"
 
     static let entries: [VersionEntry] = [
+        VersionEntry(
+            version: "1.6.1",
+            build: "17",
+            date: "17/07/2026",
+            changes: [
+                "Corrigido crash do CarPlay ao ativar o Jarvis com o app fechado no iPhone: as mudanças de estado (ouvindo/pensando/falando) eram enviadas à tela de voz antes da transição de abertura do template terminar, e o CarPlay abortava o processo.",
+                "Todas as operações de template do CarPlay (abrir tela de voz, voltar à lista) agora aguardam a confirmação de conclusão antes de qualquer outra operação, evitando comandos sobrepostos."
+            ],
+            isCurrent: true
+        ),
         VersionEntry(
             version: "1.6.0",
             build: "16",
@@ -24,7 +34,7 @@ enum VersionHistory {
                 "Tocar em “Ativar” no CarPlay leva a uma tela de controle por voz nativa (CPVoiceControlTemplate) que mostra ao vivo o estado do Jarvis: ouvindo, pensando, falando ou parado.",
                 "Se o microfone/reconhecimento de fala ainda não foram autorizados, o CarPlay agora avisa para abrir o Jarvis no iPhone primeiro, em vez de ficar sem reação ao toque."
             ],
-            isCurrent: true
+            isCurrent: false
         ),
         VersionEntry(
             version: "1.5.0",

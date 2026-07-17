@@ -8,6 +8,10 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     private var cancellables = Set<AnyCancellable>()
     private let session = JarvisSession.shared
 
+    private var isPushingVoiceControl = false
+    private var isPoppingToRoot = false
+    private var voiceControlTemplateIsOnStack = false
+
     private let listItem = CPListItem(text: "Diga “Ei Jarvis”", detailText: "Toque para ativar o assistente por voz")
 
     private lazy var listTemplate: CPListTemplate = {
@@ -36,10 +40,12 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     ) {
         self.interfaceController = interfaceController
         interfaceController.delegate = self
-        interfaceController.setRootTemplate(listTemplate, animated: false, completion: nil)
-        observeSession()
-        if session.isActivated {
-            presentVoiceControl()
+        interfaceController.setRootTemplate(listTemplate, animated: false) { [weak self] _, _ in
+            guard let self else { return }
+            self.observeSession()
+            if self.session.isActivated {
+                self.presentVoiceControl()
+            }
         }
     }
 
@@ -48,6 +54,9 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         didDisconnectInterfaceController interfaceController: CPInterfaceController
     ) {
         cancellables.removeAll()
+        isPushingVoiceControl = false
+        isPoppingToRoot = false
+        voiceControlTemplateIsOnStack = false
         self.interfaceController = nil
     }
 
@@ -61,13 +70,32 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     }
 
     func templateDidDisappear(_ aTemplate: CPTemplate, animated: Bool) {
-        guard aTemplate === voiceControlTemplate, session.isActivated else { return }
-        session.stop()
+        guard aTemplate === voiceControlTemplate else { return }
+        voiceControlTemplateIsOnStack = false
+        if session.isActivated {
+            session.stop()
+        }
     }
 
     private func presentVoiceControl() {
-        guard interfaceController?.topTemplate !== voiceControlTemplate else { return }
-        interfaceController?.pushTemplate(voiceControlTemplate, animated: true, completion: nil)
+        guard !isPushingVoiceControl, interfaceController?.topTemplate !== voiceControlTemplate else { return }
+        isPushingVoiceControl = true
+        interfaceController?.pushTemplate(voiceControlTemplate, animated: true) { [weak self] _, _ in
+            guard let self else { return }
+            self.isPushingVoiceControl = false
+            self.voiceControlTemplateIsOnStack = true
+            self.updateVoiceControlState(for: self.session.state)
+        }
+    }
+
+    private func popToRootIfNeeded() {
+        guard !isPoppingToRoot, interfaceController?.topTemplate === voiceControlTemplate else { return }
+        isPoppingToRoot = true
+        interfaceController?.popToRootTemplate(animated: true) { [weak self] _, _ in
+            guard let self else { return }
+            self.isPoppingToRoot = false
+            self.voiceControlTemplateIsOnStack = false
+        }
     }
 
     private func presentPermissionAlert() {
@@ -94,7 +122,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
             .sink { [weak self] isActivated in
                 self?.listItem.setText(isActivated ? "Jarvis ativo" : "Diga “Ei Jarvis”")
                 if !isActivated {
-                    self?.interfaceController?.popToRootTemplate(animated: true, completion: nil)
+                    self?.popToRootIfNeeded()
                 }
             }
             .store(in: &cancellables)
@@ -108,7 +136,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     }
 
     private func updateVoiceControlState(for state: JarvisSession.State) {
-        guard session.isActivated else { return }
+        guard voiceControlTemplateIsOnStack, session.isActivated else { return }
         switch state {
         case .idle: voiceControlTemplate.activateVoiceControlState(withIdentifier: "idle")
         case .listening: voiceControlTemplate.activateVoiceControlState(withIdentifier: "listening")
