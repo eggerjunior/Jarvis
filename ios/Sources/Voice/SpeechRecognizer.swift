@@ -27,6 +27,10 @@ final class JarvisSpeechRecognizer {
 
     private init() {}
 
+    static var isAuthorized: Bool {
+        SFSpeechRecognizer.authorizationStatus() == .authorized && AVAudioApplication.shared.recordPermission == .granted
+    }
+
     static func requestPermissions() async -> Bool {
         let speechAllowed = await withCheckedContinuation { continuation in
             SFSpeechRecognizer.requestAuthorization { status in

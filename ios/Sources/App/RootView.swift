@@ -2,7 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @StateObject private var session = JarvisSession()
+    @EnvironmentObject private var session: JarvisSession
     @State private var typedCommand = ""
     @State private var showKey = false
     @State private var showingVersionHistory = false
@@ -34,9 +34,6 @@ struct RootView: View {
         }
         .onChange(of: scenePhase) { _, newPhase in
             guard newPhase == .active else { return }
-            session.start()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .jarvisCarPlayActivate)) { _ in
             session.start()
         }
         .sheet(isPresented: $showingVersionHistory) {

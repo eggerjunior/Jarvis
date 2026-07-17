@@ -45,6 +45,8 @@ enum AIProvider: String, CaseIterable, Identifiable {
 
 @MainActor
 final class JarvisSession: ObservableObject {
+    static let shared = JarvisSession()
+
     private enum ConversationTiming {
         static let followUpWindow: TimeInterval = 5.0
     }
