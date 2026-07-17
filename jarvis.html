@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jarvis v1.2.1</title>
+  <title>Jarvis v1.3.0</title>
   <style>
     :root {
       --theme: #2dd4ff;
@@ -583,6 +583,138 @@
     .edge { stroke-dasharray: 9 12; animation: dash 2.8s linear infinite; }
     .core-pulse { animation: corePulse 2s ease-in-out infinite; transform-origin: center; }
 
+    .local-hub {
+      margin-top: 28px;
+      border: 1px solid rgba(45, 212, 255, .2);
+      border-radius: 8px;
+      background: rgba(5, 10, 19, .76);
+      overflow: hidden;
+    }
+
+    .hub-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid rgba(45, 212, 255, .14);
+    }
+
+    .hub-tab, .hub-action, .small-action {
+      min-height: 38px;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: .78rem;
+      font-weight: 900;
+    }
+
+    .hub-tab.active, .hub-action.primary {
+      color: #031018;
+      background: linear-gradient(90deg, var(--theme), #b8f3ff);
+    }
+
+    .hub-note {
+      margin-left: auto;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: .78rem;
+    }
+
+    .hub-panel {
+      display: none;
+      padding: 16px;
+      animation: panelIn .22s ease;
+    }
+
+    .hub-panel.active { display: block; }
+    @keyframes panelIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .hub-head {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .hub-title {
+      margin: 0;
+      color: var(--theme);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 1rem;
+    }
+
+    .hub-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .hub-card {
+      border: 1px solid rgba(45, 212, 255, .16);
+      border-radius: 8px;
+      background: rgba(255,255,255,.035);
+      padding: 12px;
+    }
+
+    .hub-form {
+      display: grid;
+      grid-template-columns: 1.1fr .8fr .7fr 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .hub-form input, .hub-form textarea, .hub-form select, .wide-input, .wide-textarea {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid rgba(45, 212, 255, .22);
+      border-radius: 8px;
+      background: rgba(0,0,0,.28);
+      padding: 10px;
+      outline: none;
+    }
+
+    .wide-textarea { min-height: 130px; resize: vertical; }
+    .item-row {
+      display: grid;
+      grid-template-columns: 12px 1fr auto;
+      gap: 10px;
+      align-items: start;
+      padding: 9px 0;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    .item-row:first-child { border-top: 0; }
+    .item-dot {
+      width: 10px;
+      height: 10px;
+      margin-top: 6px;
+      border-radius: 50%;
+      background: var(--theme);
+      box-shadow: 0 0 10px var(--theme);
+    }
+
+    .item-main strong { display: block; font-size: .96rem; }
+    .item-meta, .empty-state, .helper-text {
+      color: var(--muted);
+      font-size: .84rem;
+      line-height: 1.5;
+    }
+
+    .bucket-title {
+      margin: 0 0 10px;
+      color: var(--theme);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: .84rem;
+      text-transform: uppercase;
+    }
+
+    .digest-text {
+      margin: 0;
+      white-space: pre-wrap;
+      line-height: 1.55;
+    }
+
     @keyframes breathe { 50% { opacity: .35; transform: scale(1.3); } }
     @keyframes dash { to { stroke-dashoffset: -42; } }
     @keyframes corePulse { 50% { transform: scale(1.08); opacity: .82; } }
@@ -600,6 +732,8 @@
       .brain-header { grid-template-columns: 1fr auto auto; }
       .brain-count { grid-column: 1 / -1; }
       .injected { margin-left: 0; width: 100%; }
+      .hub-note { width: 100%; margin-left: 0; }
+      .hub-form { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 520px) {
@@ -660,6 +794,69 @@
             <input class="command-input" id="commandInput" type="text" placeholder="ou digite e tecle Enter">
             <button class="icon-btn" id="micBtn" type="button" title="Falar agora">●</button>
             <button class="icon-btn" id="stopBtn" type="button" title="Interromper fala">■</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="local-hub">
+        <div class="hub-tabs">
+          <button class="hub-tab active" data-hub-tab="agenda" type="button">AGENDA</button>
+          <button class="hub-tab" data-hub-tab="emails" type="button">E-MAILS</button>
+          <button class="hub-tab" data-hub-tab="noticias" type="button">NOTÍCIAS</button>
+          <button class="hub-tab" data-hub-tab="digest" type="button">DIGEST</button>
+          <span class="hub-note">MODO LOCAL · sem servidor</span>
+        </div>
+
+        <div class="hub-panel active" id="hub-agenda">
+          <div class="hub-head">
+            <h3 class="hub-title">Central de Agenda Local</h3>
+            <button class="hub-action" id="clearPastEvents" type="button">limpar passados</button>
+          </div>
+          <div class="hub-card">
+            <div class="hub-form">
+              <input id="eventTitle" type="text" placeholder="Compromisso">
+              <input id="eventDate" type="date">
+              <input id="eventTime" type="time">
+              <input id="eventLocation" type="text" placeholder="Local opcional">
+              <button class="hub-action primary" id="addEvent" type="button">Adicionar</button>
+            </div>
+            <p class="helper-text">Sem servidor local: a agenda aqui é manual e fica salva só neste navegador.</p>
+          </div>
+          <div class="hub-grid" id="agendaList"></div>
+        </div>
+
+        <div class="hub-panel" id="hub-emails">
+          <div class="hub-head">
+            <h3 class="hub-title">Central de E-mails Local</h3>
+            <button class="hub-action" id="triageEmails" type="button">triar texto</button>
+          </div>
+          <div class="hub-card">
+            <textarea class="wide-textarea" id="emailPaste" placeholder="Cole aqui e-mails ou trechos recentes. Separe mensagens com uma linha em branco. O Jarvis classifica em AÇÃO, INFO e RUÍDO."></textarea>
+            <p class="helper-text">Sem servidor local, o Jarvis não entra no Gmail sozinho. Cole os trechos aqui quando quiser triagem.</p>
+          </div>
+          <div class="hub-grid" id="emailBuckets"></div>
+        </div>
+
+        <div class="hub-panel" id="hub-noticias">
+          <div class="hub-head">
+            <h3 class="hub-title">Radar de Notícias Local</h3>
+            <button class="hub-action" id="saveRadar" type="button">salvar radar</button>
+          </div>
+          <div class="hub-card">
+            <input class="wide-input" id="newsTopics" type="text" placeholder="tecnologia, economia">
+            <textarea class="wide-textarea" id="newsHeadlines" placeholder="Cole manchetes, links ou notas rápidas. O digest usa este radar local."></textarea>
+            <p class="helper-text">Sem servidor local, o radar não busca RSS automaticamente. Você cola assuntos/manchetes, e o Jarvis usa isso no briefing.</p>
+          </div>
+          <div class="hub-grid" id="newsList"></div>
+        </div>
+
+        <div class="hub-panel" id="hub-digest">
+          <div class="hub-head">
+            <h3 class="hub-title">Morning Digest</h3>
+            <button class="hub-action primary" id="runDigest" type="button">DIGEST</button>
+          </div>
+          <div class="hub-card">
+            <p class="digest-text" id="digestText">Bom dia, Senhor. O briefing local aparecerá aqui.</p>
           </div>
         </div>
       </section>
@@ -725,17 +922,28 @@
 
   <script>
     const VERSION = {
-      version: "1.2.1",
-      build: 7,
-      commit: "dev",
-      buildDate: "dev",
+      version: "1.3.0",
+      build: 8,
+      commit: "b235d6ad",
+      buildDate: "2026-07-17T16:59:31Z",
       repo: "https://github.com/eggerjunior/Jarvis",
       history: [
+        {
+          version: "1.3.0",
+          build: 8,
+          date: "13/07/2026",
+          current: true,
+          changes: [
+            "Adicionados módulos locais de Agenda, E-mails, Notícias e Morning Digest sem servidor local.",
+            "Comandos de voz locais respondem agenda, e-mails, notícias e digest antes do fluxo normal da API.",
+            "Contexto compacto de agenda/e-mails/notícias passou a complementar o system prompt."
+          ]
+        },
         {
           version: "1.2.1",
           build: 7,
           date: "12/07/2026",
-          current: true,
+          current: false,
           changes: [
             "Movidos API KEY, MODELO, TESTE e VOZ para um modal de Configurações, acessível por um botão de engrenagem.",
             "Adicionado gasto da organização (mês atual) ao resultado do Testar modelo, via Admin API.",
@@ -777,7 +985,7 @@
       persona: "Formal Britânico",
       wakeWord: "ei jarvis",
       voiceGender: "masculina",
-      model: "claude-haiku-4-5-20251001"
+      model: "claude-sonnet-5"
     };
 
     const MODELS = [
@@ -839,6 +1047,12 @@
       cancelEdit: $("cancelEdit"), saveNote: $("saveNote"), bootVersion: $("bootVersion"),
       versionToggle: $("versionToggle"), versionSummary: $("versionSummary"), versionDetails: $("versionDetails"),
       openSettings: $("openSettings"), closeSettings: $("closeSettings"), settingsModal: $("settingsModal")
+    };
+
+    const hubEls = {
+      agendaList: $("agendaList"), emailBuckets: $("emailBuckets"), newsList: $("newsList"),
+      eventTitle: $("eventTitle"), eventDate: $("eventDate"), eventTime: $("eventTime"), eventLocation: $("eventLocation"),
+      emailPaste: $("emailPaste"), newsTopics: $("newsTopics"), newsHeadlines: $("newsHeadlines"), digestText: $("digestText")
     };
 
     let notes = loadNotes();
@@ -946,6 +1160,15 @@
     els.versionToggle.addEventListener("click", () => els.versionDetails.classList.toggle("open"));
     renderVersion();
 
+    const localHub = {
+      events: loadJson("jarvis_local_agenda", []),
+      emails: loadJson("jarvis_local_email_triage", []),
+      topics: loadJson("jarvis_local_news_topics", ["tecnologia", "economia"]),
+      headlines: loadJson("jarvis_local_news_headlines", [])
+    };
+
+    initLocalHub();
+
     Object.entries(AREA).forEach(([key, area]) => {
       const option = document.createElement("option");
       option.value = key;
@@ -968,6 +1191,19 @@
 
     function saveNotes() {
       localStorage.setItem("jarvis_notes", JSON.stringify(notes));
+    }
+
+    function loadJson(key, fallback) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(key) || "null");
+        return parsed === null ? structuredClone(fallback) : parsed;
+      } catch {
+        return structuredClone(fallback);
+      }
+    }
+
+    function saveJson(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
     }
 
     function setStatus(text) {
@@ -1300,6 +1536,7 @@
     async function handleCommand(text) {
       if (!text) return;
       if (speaking || thinking) return;
+      if (await handleLocalHubCommand(text)) return;
       if (isModelQuestion(text)) {
         answerModelQuestion();
         return;
@@ -1520,10 +1757,231 @@
       return [
         `Você é ${CONFIG.name}, um assistente pessoal com personalidade ${CONFIG.persona}. Trate o usuário como ${CONFIG.address}.`,
         "Responda sempre em português do Brasil, em tom falado, curto, útil e elegante. Use 2 a 4 frases. Não use emojis nem markdown.",
+        "Você também tem módulos locais sem servidor: agenda manual, triagem de e-mails colados, radar de notícias coladas e Morning Digest. Quando perguntarem o que você sabe fazer, cite os comandos: minha agenda, próximo compromisso, meus e-mails, notícias e bom dia.",
+        `Agenda local de hoje: ${compactTodayEvents()}.`,
+        `E-mails locais pedindo ação: ${localHub.emails.filter((email) => email.bucket === "acao").length}.`,
+        `Radar local: ${localHub.headlines.slice(0, 5).join(" · ") || "sem manchetes coladas"}.`,
         `Modelo selecionado no app para esta requisição: ${model ? `${model.label} (${model.id})` : currentModel()}. Se perguntarem qual modelo está sendo usado, responda este identificador e nunca invente outro modelo.`,
         `SECOND BRAIN COMPLETO:\n${grouped}`,
         "Memória viva: Se o usuário revelar algo novo e duradouro, TERMINE a resposta com uma linha no formato EXATO [[SAVE:area|titulo|texto]] (area ∈ metas, trabalho, projetos, financas, aprendizado, saude, relacoes, meta). Se já existir nota com esse título, ela é atualizada; senão nasce uma nova. Inclua só quando houver algo realmente novo."
       ].join("\n\n");
+    }
+
+    function initLocalHub() {
+      document.querySelectorAll("[data-hub-tab]").forEach((button) => {
+        button.addEventListener("click", () => openHub(button.dataset.hubTab));
+      });
+      const today = new Date().toISOString().slice(0, 10);
+      hubEls.eventDate.value = today;
+      hubEls.eventTime.value = "09:00";
+      hubEls.newsTopics.value = localHub.topics.join(", ");
+      hubEls.newsHeadlines.value = localHub.headlines.join("\n");
+      $("addEvent").addEventListener("click", addLocalEvent);
+      $("clearPastEvents").addEventListener("click", clearPastEvents);
+      $("triageEmails").addEventListener("click", triagePastedEmails);
+      $("saveRadar").addEventListener("click", saveRadar);
+      $("runDigest").addEventListener("click", () => runLocalDigest(true));
+      renderLocalAgenda();
+      renderLocalEmails();
+      renderLocalNews();
+    }
+
+    function openHub(name) {
+      document.querySelectorAll("[data-hub-tab]").forEach((button) => button.classList.toggle("active", button.dataset.hubTab === name));
+      document.querySelectorAll(".hub-panel").forEach((panel) => panel.classList.toggle("active", panel.id === `hub-${name}`));
+    }
+
+    function addLocalEvent() {
+      const title = hubEls.eventTitle.value.trim();
+      if (!title) {
+        setStatus("Informe o compromisso");
+        return;
+      }
+      const date = hubEls.eventDate.value || new Date().toISOString().slice(0, 10);
+      const time = hubEls.eventTime.value || "09:00";
+      localHub.events.push({
+        id: Date.now().toString(36),
+        title,
+        date,
+        time,
+        location: hubEls.eventLocation.value.trim()
+      });
+      localHub.events.sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`));
+      saveJson("jarvis_local_agenda", localHub.events);
+      hubEls.eventTitle.value = "";
+      hubEls.eventLocation.value = "";
+      renderLocalAgenda();
+      setStatus("Compromisso salvo localmente");
+    }
+
+    function clearPastEvents() {
+      const today = new Date().toISOString().slice(0, 10);
+      localHub.events = localHub.events.filter((event) => event.date >= today);
+      saveJson("jarvis_local_agenda", localHub.events);
+      renderLocalAgenda();
+    }
+
+    function renderLocalAgenda() {
+      if (!localHub.events.length) {
+        hubEls.agendaList.innerHTML = `<div class="hub-card empty-state">Nenhum compromisso local salvo.</div>`;
+        return;
+      }
+      hubEls.agendaList.innerHTML = `<div class="hub-card">${localHub.events.map((event) => `
+        <div class="item-row">
+          <span class="item-dot"></span>
+          <span class="item-main"><strong>${escapeHtml(formatLocalEventTime(event))} · ${escapeHtml(event.title)}</strong><span class="item-meta">${escapeHtml(event.location || "sem local")}</span></span>
+          <button class="small-action" data-delete-event="${event.id}" type="button">×</button>
+        </div>`).join("")}</div>`;
+      hubEls.agendaList.querySelectorAll("[data-delete-event]").forEach((button) => {
+        button.addEventListener("click", () => {
+          localHub.events = localHub.events.filter((event) => event.id !== button.dataset.deleteEvent);
+          saveJson("jarvis_local_agenda", localHub.events);
+          renderLocalAgenda();
+        });
+      });
+    }
+
+    function formatLocalEventTime(event) {
+      const date = new Date(`${event.date}T${event.time || "00:00"}`);
+      const today = new Date().toISOString().slice(0, 10);
+      const label = event.date === today ? "Hoje" : date.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" });
+      return `${label} ${event.time || ""}`.trim();
+    }
+
+    function triagePastedEmails() {
+      const parts = hubEls.emailPaste.value.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
+      localHub.emails = parts.map((text, index) => {
+        const firstLine = text.split(/\n/)[0] || `Mensagem ${index + 1}`;
+        const bucket = classifyEmailText(text);
+        return { id: `${Date.now()}-${index}`, title: firstLine.slice(0, 90), text, bucket, summary: summarizeEmail(text, bucket) };
+      });
+      saveJson("jarvis_local_email_triage", localHub.emails);
+      renderLocalEmails();
+      setStatus("E-mails triados localmente");
+    }
+
+    function classifyEmailText(text) {
+      const normalized = normalizeText(text);
+      if (/(noreply|no-reply|newsletter|unsubscribe|promocao|oferta|marketing|notificacao automatica|cupom)/.test(normalized)) return "ruido";
+      if (/(por favor|responda|responder|prazo|urgente|reuniao|fatura|boleto|vencimento|aprovar|decisao|pendente|\?)/.test(normalized)) return "acao";
+      return "info";
+    }
+
+    function summarizeEmail(text, bucket) {
+      const clean = text.replace(/\s+/g, " ").trim().slice(0, 150);
+      if (bucket === "acao") return `Parece pedir ação: ${clean}`;
+      if (bucket === "ruido") return `Provável ruído: ${clean}`;
+      return `Informação para acompanhar: ${clean}`;
+    }
+
+    function renderLocalEmails() {
+      const buckets = { acao: [], info: [], ruido: [] };
+      localHub.emails.forEach((email) => buckets[email.bucket].push(email));
+      const labels = { acao: "AÇÃO", info: "INFO", ruido: "RUÍDO" };
+      hubEls.emailBuckets.innerHTML = ["acao", "info", "ruido"].map((bucket) => `
+        <div class="hub-card">
+          <h4 class="bucket-title">${labels[bucket]} · ${buckets[bucket].length}</h4>
+          ${buckets[bucket].length ? buckets[bucket].map((email) => `
+            <div class="item-row"><span class="item-dot"></span><span class="item-main"><strong>${escapeHtml(email.title)}</strong><span class="item-meta">${escapeHtml(email.summary)}</span></span><span></span></div>
+          `).join("") : `<div class="empty-state">Nada aqui.</div>`}
+        </div>`).join("");
+    }
+
+    function saveRadar() {
+      localHub.topics = hubEls.newsTopics.value.split(",").map((topic) => topic.trim()).filter(Boolean);
+      if (!localHub.topics.length) localHub.topics = ["tecnologia", "economia"];
+      localHub.headlines = hubEls.newsHeadlines.value.split(/\n/).map((line) => line.trim()).filter(Boolean);
+      saveJson("jarvis_local_news_topics", localHub.topics);
+      saveJson("jarvis_local_news_headlines", localHub.headlines);
+      renderLocalNews();
+      setStatus("Radar local salvo");
+    }
+
+    function renderLocalNews() {
+      const topics = localHub.topics.length ? localHub.topics.join(" · ") : "tecnologia · economia";
+      hubEls.newsList.innerHTML = `<div class="hub-card"><h4 class="bucket-title">${escapeHtml(topics)}</h4>${
+        localHub.headlines.length
+          ? localHub.headlines.map((headline) => `<div class="item-row"><span class="item-dot"></span><span class="item-main"><strong>${escapeHtml(headline)}</strong><span class="item-meta">radar local</span></span><span></span></div>`).join("")
+          : `<div class="empty-state">Nenhuma manchete local salva.</div>`
+      }</div>`;
+    }
+
+    async function runLocalDigest(readAloud = true) {
+      openHub("digest");
+      const text = buildLocalDigest();
+      hubEls.digestText.textContent = text;
+      localStorage.setItem("jarvis_last_digest", new Date().toISOString().slice(0, 10));
+      els.assistantLine.textContent = text;
+      if (readAloud) speak(text);
+    }
+
+    function buildLocalDigest() {
+      const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+      const todayEvents = getTodayEvents();
+      const actionEmails = localHub.emails.filter((email) => email.bucket === "acao");
+      const goals = notes.filter((note) => note.area === "metas").slice(0, 2).map((note) => note.title).join(" e ");
+      return [
+        `Bom dia, ${CONFIG.address}. Hoje é ${today}.`,
+        todayEvents.length ? `Na agenda local: ${todayEvents.map((event) => `${event.time} ${event.title}`).join("; ")}.` : "Sua agenda local está livre hoje.",
+        actionEmails.length ? `E-mails pedindo ação: ${actionEmails.map((email) => email.summary).join("; ")}.` : "Não há e-mails de ação na triagem local.",
+        localHub.headlines.length ? `No radar: ${localHub.headlines.slice(0, 5).join("; ")}.` : "O radar local ainda não tem manchetes salvas.",
+        `Foco do dia: avance com calma no que aproxima você de ${goals || "suas metas principais"}.`
+      ].join(" ");
+    }
+
+    function getTodayEvents() {
+      const today = new Date().toISOString().slice(0, 10);
+      return localHub.events.filter((event) => event.date === today).sort((a, b) => String(a.time).localeCompare(String(b.time)));
+    }
+
+    function compactTodayEvents() {
+      const events = getTodayEvents();
+      return events.length ? events.map((event) => `${event.time} ${event.title}`).join(" · ") : "sem compromissos locais";
+    }
+
+    async function handleLocalHubCommand(text) {
+      const normalized = normalizeText(text);
+      if (normalized.includes("bom dia")) {
+        await runLocalDigest(true);
+        return true;
+      }
+      if (normalized.includes("minha agenda") || normalized.includes("o que eu tenho hoje")) {
+        openHub("agenda");
+        const events = getTodayEvents();
+        const answer = events.length ? `Hoje o Senhor tem ${events.length} compromisso(s): ${events.map((event) => `${event.time} ${event.title}`).join("; ")}.` : "Hoje a agenda local está livre, Senhor.";
+        els.userLine.textContent = text;
+        els.assistantLine.textContent = answer;
+        speak(answer);
+        return true;
+      }
+      if (normalized.includes("proximo compromisso") || normalized.includes("proxima reuniao")) {
+        openHub("agenda");
+        const nowKey = new Date().toISOString().slice(0, 16);
+        const next = localHub.events.find((event) => `${event.date}T${event.time || "00:00"}` >= nowKey);
+        const answer = next ? `Seu próximo compromisso local é ${next.title}, ${formatLocalEventTime(next)}.` : "Não encontrei próximo compromisso local.";
+        els.userLine.textContent = text;
+        els.assistantLine.textContent = answer;
+        speak(answer);
+        return true;
+      }
+      if (normalized.includes("meus emails") || normalized.includes("meus e-mails") || normalized.includes("tem email importante") || normalized.includes("tem e-mail importante")) {
+        openHub("emails");
+        const action = localHub.emails.filter((email) => email.bucket === "acao");
+        const answer = action.length ? `Há ${action.length} e-mail(s) de ação na triagem local: ${action.map((email) => email.summary).join("; ")}.` : "Não há e-mails de ação na triagem local.";
+        els.userLine.textContent = text;
+        els.assistantLine.textContent = answer;
+        speak(answer);
+        return true;
+      }
+      if (normalized.includes("noticias")) {
+        openHub("noticias");
+        const answer = localHub.headlines.length ? `Radar local: ${localHub.headlines.slice(0, 5).join("; ")}.` : "O radar local ainda não tem manchetes salvas.";
+        els.userLine.textContent = text;
+        els.assistantLine.textContent = answer;
+        speak(answer);
+        return true;
+      }
+      return false;
     }
 
     function renderVersion() {
