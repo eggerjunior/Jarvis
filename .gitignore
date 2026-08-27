@@ -30,3 +30,4 @@ ios/DerivedData/
 # Local editor state
 .idea/
 .vscode/
+.claude/settings.local.json
