@@ -59,6 +59,7 @@
     "docs/development-handoff/screenshots/ios-simulator-voice-picker-2026-07-13.png"
   ],
   "import_order": [
+    "AGENTS.md",
     "docs/development-handoff/README.md",
     "docs/development-handoff/PROJECT_CONTEXT.md",
     "docs/development-handoff/RELEASE_LOG.md",

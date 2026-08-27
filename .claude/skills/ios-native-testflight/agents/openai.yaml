@@ -1,0 +1,4 @@
+interface:
+  display_name: "iOS Native TestFlight (obsoleta)"
+  short_description: "Cópia histórica; use ildemar_ios-native-testflight."
+  default_prompt: "Não use esta cópia histórica; carregue a skill canônica ildemar_ios-native-testflight."
