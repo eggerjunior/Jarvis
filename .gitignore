@@ -1,33 +1,17 @@
-.DS_Store
-
-# Secrets
-*.p8
-**/asc.env
-.env
-.env.*
-
-# Node / web
-node_modules/
-frontend/node_modules/
-dist/
-build/
-.vite/
-
-# Python
-.venv/
-backend/.venv/
-__pycache__/
-*.pyc
-
-# Xcode
-DerivedData/
-*.xcarchive
-*.ipa
-*.xcdistributionlogs
-ios/build/
-ios/DerivedData/
-
-# Local editor state
+*.iml
+.gradle
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
 .idea/
-.vscode/
-.claude/settings.local.json
+.DS_Store
+/build/
+**/build/
+**/.gradle/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
