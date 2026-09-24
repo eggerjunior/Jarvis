@@ -17,6 +17,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedButton
@@ -78,8 +79,9 @@ fun SettingsDialog(
     }
 
     var showKey by remember { mutableStateOf(false) }
-    var modelMenuExpanded by remember { mutableStateOf(false) }
     var voiceMenuExpanded by remember { mutableStateOf(false) }
+    var providerSearch by remember { mutableStateOf("") }
+    var modelSearch by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -198,23 +200,37 @@ fun SettingsDialog(
                             fontWeight = FontWeight.Bold
                         )
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            AIProvider.entries.forEach { provider ->
-                                val isSelected = provider == selectedProvider
-                                Button(
-                                    onClick = { session.setSelectedProvider(provider) },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (isSelected) Color(0xFF00E5FF) else Color(0x22FFFFFF),
-                                        contentColor = if (isSelected) Color.Black else Color.White
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(provider.label, fontWeight = FontWeight.SemiBold)
+                        OutlinedTextField(
+                            value = providerSearch,
+                            onValueChange = { providerSearch = it },
+                            placeholder = { Text("Digite para buscar provedor", color = Color.Gray) },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF00E5FF),
+                                unfocusedBorderColor = Color.Gray,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            AIProvider.entries
+                                .filter { it.label.contains(providerSearch, ignoreCase = true) }
+                                .forEach { provider ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Checkbox(
+                                            checked = provider == selectedProvider,
+                                            onCheckedChange = { checked ->
+                                                if (checked) session.setSelectedProvider(provider)
+                                            }
+                                        )
+                                        Text(provider.label, color = Color.White)
+                                    }
                                 }
-                            }
                         }
                     }
 
@@ -247,37 +263,52 @@ fun SettingsDialog(
                             }
                         }
 
-                        Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = modelSearch,
+                            onValueChange = { modelSearch = it },
+                            placeholder = { Text("Digite para buscar modelo", color = Color.Gray) },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF00E5FF),
+                                unfocusedBorderColor = Color.Gray,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             val availableModels = session.availableModelsForSelectedProvider()
-                            val currentModelObj = availableModels.firstOrNull { it.id == candidateModel }
-
-                            OutlinedButton(
-                                onClick = { modelMenuExpanded = true },
-                                enabled = availableModels.isNotEmpty(),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x5900E5FF)),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = currentModelObj?.let { "${it.label} · ${it.price}" }
-                                        ?: if (isLoadingProviderModels) "Carregando modelos…" else "Nenhum modelo carregado",
-                                    modifier = Modifier.fillMaxWidth()
-                                )
+                            val filteredModels = availableModels.filter {
+                                it.id.contains(modelSearch, ignoreCase = true) ||
+                                    it.label.contains(modelSearch, ignoreCase = true)
                             }
-
-                            DropdownMenu(
-                                expanded = modelMenuExpanded,
-                                onDismissRequest = { modelMenuExpanded = false }
-                            ) {
-                                availableModels.forEach { model ->
-                                    DropdownMenuItem(
-                                        text = { Text("${model.label} · ${model.price}") },
-                                        onClick = {
-                                            session.setCandidateModel(model.id)
-                                            modelMenuExpanded = false
+                            filteredModels.forEach { model ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = model.id == candidateModel,
+                                        enabled = !isLoadingProviderModels,
+                                        onCheckedChange = { checked ->
+                                            if (checked) session.setCandidateModel(model.id)
                                         }
                                     )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(model.label, color = Color.White)
+                                        Text("${model.id} · ${model.price}", color = Color.LightGray, fontSize = 11.sp)
+                                    }
                                 }
+                            }
+                            if (filteredModels.isEmpty()) {
+                                Text(
+                                    text = if (modelSearch.isNotBlank()) "Nenhum modelo corresponde à busca."
+                                    else if (isLoadingProviderModels) "Carregando modelos…"
+                                    else "Nenhum modelo carregado para este provedor.",
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
                             }
                             if (modelCatalogError.isNotBlank()) {
                                 Text(modelCatalogError, color = Color(0xFFFF8A80), fontSize = 12.sp)
