@@ -160,6 +160,9 @@ class AIModelClient {
         val request = Request.Builder()
             .url("https://omniroute.egger.app.br/v1/chat/completions")
             .post(gson.toJson(payload).toRequestBody(jsonMediaType))
+            // OmniRoute accepts API keys through its gateway header. Keep Bearer
+            // as well for OpenAI-compatible deployments behind the same endpoint.
+            .addHeader("X-API-Key", apiKey)
             .addHeader("Authorization", "Bearer $apiKey")
             .addHeader("Content-Type", "application/json")
             .build()
