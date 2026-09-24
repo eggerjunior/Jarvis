@@ -26,6 +26,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,20 +56,30 @@ fun SettingsDialog(
     val openRouterApiKey by session.openRouterApiKey.collectAsState()
     val omniRouteApiKey by session.omniRouteApiKey.collectAsState()
     val selectedModel by session.selectedModel.collectAsState()
+    val candidateModel by session.candidateModel.collectAsState()
     val selectedVoicePreference by session.selectedVoicePreference.collectAsState()
     val selectedVoiceIdentifier by session.selectedVoiceIdentifier.collectAsState()
     val modelTestLine by session.modelTestLine.collectAsState()
     val isTestingModel by session.isTestingModel.collectAsState()
-
-    var showKey by remember { mutableStateOf(false) }
-    var modelMenuExpanded by remember { mutableStateOf(false) }
-    var voiceMenuExpanded by remember { mutableStateOf(false) }
+    val availableProviderModels by session.availableProviderModels.collectAsState()
+    val isLoadingProviderModels by session.isLoadingProviderModels.collectAsState()
+    val modelCatalogError by session.modelCatalogError.collectAsState()
 
     val currentApiKey = when (selectedProvider) {
         AIProvider.ANTHROPIC -> anthropicApiKey
         AIProvider.OPEN_ROUTER -> openRouterApiKey
         AIProvider.OMNI_ROUTE -> omniRouteApiKey
     }
+
+    LaunchedEffect(selectedProvider, currentApiKey) {
+        if (currentApiKey.isNotBlank() && availableProviderModels[selectedProvider] == null) {
+            session.refreshSelectedProviderModels()
+        }
+    }
+
+    var showKey by remember { mutableStateOf(false) }
+    var modelMenuExpanded by remember { mutableStateOf(false) }
+    var voiceMenuExpanded by remember { mutableStateOf(false) }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -216,26 +227,40 @@ fun SettingsDialog(
                             .padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = "MODELO",
-                            color = Color(0xFF00E5FF),
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "MODELO",
+                                color = Color(0xFF00E5FF),
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold
+                            )
+                            TextButton(
+                                onClick = { session.refreshSelectedProviderModels() },
+                                enabled = !isLoadingProviderModels
+                            ) {
+                                Text(if (isLoadingProviderModels) "Buscando…" else "Atualizar modelos")
+                            }
+                        }
 
                         Box(modifier = Modifier.fillMaxWidth()) {
                             val availableModels = session.availableModelsForSelectedProvider()
-                            val currentModelObj = availableModels.firstOrNull { it.id == selectedModel }
+                            val currentModelObj = availableModels.firstOrNull { it.id == candidateModel }
 
                             OutlinedButton(
                                 onClick = { modelMenuExpanded = true },
+                                enabled = availableModels.isNotEmpty(),
                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x5900E5FF)),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = if (currentModelObj != null) "${currentModelObj.label} · ${currentModelObj.price}" else selectedModel,
+                                    text = currentModelObj?.let { "${it.label} · ${it.price}" }
+                                        ?: if (isLoadingProviderModels) "Carregando modelos…" else "Nenhum modelo carregado",
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -248,11 +273,14 @@ fun SettingsDialog(
                                     DropdownMenuItem(
                                         text = { Text("${model.label} · ${model.price}") },
                                         onClick = {
-                                            session.setSelectedModel(model.id)
+                                            session.setCandidateModel(model.id)
                                             modelMenuExpanded = false
                                         }
                                     )
                                 }
+                            }
+                            if (modelCatalogError.isNotBlank()) {
+                                Text(modelCatalogError, color = Color(0xFFFF8A80), fontSize = 12.sp)
                             }
                         }
                     }
@@ -266,28 +294,40 @@ fun SettingsDialog(
                             .padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        Text(
+                            text = "TESTE",
+                            color = Color(0xFF00E5FF),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold
+                        )
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(
-                                text = "TESTE",
-                                color = Color(0xFF00E5FF),
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold
-                            )
-
                             Button(
                                 onClick = { session.testSelectedModel() },
                                 enabled = !isTestingModel,
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(0xFF00E5FF),
                                     contentColor = Color.Black
-                                )
+                                ),
+                                modifier = Modifier.weight(1f)
                             ) {
                                 Text(if (isTestingModel) "Testando" else "Testar modelo", fontSize = 12.sp)
+                            }
+
+                            Button(
+                                onClick = { session.useCandidateModel() },
+                                enabled = candidateModel != selectedModel && !isTestingModel,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF00E5FF),
+                                    contentColor = Color.Black
+                                ),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Usar no Jarvis", fontSize = 12.sp)
                             }
                         }
 

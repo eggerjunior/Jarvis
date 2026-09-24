@@ -91,6 +91,49 @@ class AIModelClient {
     private val gson = Gson()
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
+    private data class ModelsResponse(
+        val data: List<ModelEntry>?
+    )
+
+    private data class ModelEntry(
+        val id: String?
+    )
+
+    suspend fun listModels(provider: AIProvider, apiKey: String): List<String> = withContext(Dispatchers.IO) {
+        val url = when (provider) {
+            AIProvider.ANTHROPIC -> "https://api.anthropic.com/v1/models?limit=1000"
+            AIProvider.OPEN_ROUTER -> "https://openrouter.ai/api/v1/models"
+            AIProvider.OMNI_ROUTE -> "https://omniroute.egger.app.br/v1/models"
+        }
+        val builder = Request.Builder().url(url).get().addHeader("Accept", "application/json")
+        when (provider) {
+            AIProvider.ANTHROPIC -> builder.addHeader("x-api-key", apiKey)
+                .addHeader("anthropic-version", "2023-06-01")
+            AIProvider.OPEN_ROUTER, AIProvider.OMNI_ROUTE -> builder.addHeader("Authorization", "Bearer $apiKey")
+        }
+        val response = client.newCall(builder.build()).execute()
+        val body = response.body?.string() ?: ""
+        if (!response.isSuccessful) throw IOException("Erro HTTP ${response.code}: ${extractErrorMessage(body)}")
+        gson.fromJson(body, ModelsResponse::class.java).data.orEmpty()
+            .mapNotNull { it.id?.trim()?.takeIf(String::isNotEmpty) }
+            .distinct()
+            .sorted()
+    }
+
+    suspend fun listOmniRouteModels(apiKey: String): List<String> =
+        listModels(AIProvider.OMNI_ROUTE, apiKey)
+
+
+
+    private fun extractErrorMessage(responseBody: String): String {
+        return try {
+            gson.fromJson(responseBody, OpenRouterErrorResponse::class.java)
+                ?.error?.message ?: "resposta inválida do servidor"
+        } catch (_: Exception) {
+            "resposta inválida do servidor"
+        }
+    }
+
     suspend fun send(
         provider: AIProvider,
         apiKey: String,

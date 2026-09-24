@@ -64,8 +64,21 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
     private val _omniRouteApiKey = MutableStateFlow(storage.getString(AIProvider.OMNI_ROUTE.keychainKey, ""))
     val omniRouteApiKey: StateFlow<String> = _omniRouteApiKey.asStateFlow()
 
-    private val _selectedModel = MutableStateFlow(storage.getString("anthropic_model", AIProvider.ANTHROPIC.defaultModel))
+    private val _selectedModel = MutableStateFlow(
+        storage.getString(AIProvider.fromId(storage.getString("ai_provider", "anthropic")).modelDefaultsKey, AIProvider.fromId(storage.getString("ai_provider", "anthropic")).defaultModel)
+            .let { saved -> if (saved == "cc/claude-fable-5") AIProvider.OMNI_ROUTE.defaultModel else saved }
+    )
     val selectedModel: StateFlow<String> = _selectedModel.asStateFlow()
+
+    private val _candidateModel = MutableStateFlow(_selectedModel.value)
+    val candidateModel: StateFlow<String> = _candidateModel.asStateFlow()
+
+    private val _availableProviderModels = MutableStateFlow<Map<AIProvider, List<String>>>(emptyMap())
+    val availableProviderModels: StateFlow<Map<AIProvider, List<String>>> = _availableProviderModels.asStateFlow()
+    private val _isLoadingProviderModels = MutableStateFlow(false)
+    val isLoadingProviderModels: StateFlow<Boolean> = _isLoadingProviderModels.asStateFlow()
+    private val _modelCatalogError = MutableStateFlow("")
+    val modelCatalogError: StateFlow<String> = _modelCatalogError.asStateFlow()
 
     private val _selectedVoicePreference = MutableStateFlow(JarvisVoicePreference.fromId(storage.getString("jarvis_voice_preference", "masculine")))
     val selectedVoicePreference: StateFlow<JarvisVoicePreference> = _selectedVoicePreference.asStateFlow()
@@ -115,8 +128,8 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
             AIModel("~openai/gpt-latest", AIProvider.OPEN_ROUTER, "OpenAI GPT Latest", "via OpenRouter", "Alias para o GPT flagship mais recente"),
             AIModel("anthropic/claude-sonnet-4.5", AIProvider.OPEN_ROUTER, "Claude Sonnet via OpenRouter", "via OpenRouter", "Claude por agregador"),
             AIModel("google/gemini-2.5-pro", AIProvider.OPEN_ROUTER, "Gemini Pro via OpenRouter", "via OpenRouter", "Google por agregador"),
-            AIModel("openai/gpt-4o-mini", AIProvider.OMNI_ROUTE, "GPT-4o Mini", "conforme seu plano OmniRoute", "Modelo econômico via OmniRoute"),
-            AIModel("openai/gpt-4o", AIProvider.OMNI_ROUTE, "GPT-4o", "conforme seu plano OmniRoute", "Modelo multimodal via OmniRoute"),
+            AIModel("openai/gpt-4o-mini", AIProvider.OMNI_ROUTE, "GPT-4o Mini", "fallback local", "Atualize para consultar o catálogo do OmniRoute"),
+            AIModel("openai/gpt-4o", AIProvider.OMNI_ROUTE, "GPT-4o", "conforme seu plano OmniRoute", "Requer conexão OpenAI ativa no OmniRoute"),
             AIModel("anthropic/claude-sonnet-4.5", AIProvider.OMNI_ROUTE, "Claude Sonnet", "conforme seu plano OmniRoute", "Claude roteado pelo OmniRoute"),
             AIModel("google/gemini-2.5-pro", AIProvider.OMNI_ROUTE, "Gemini Pro", "conforme seu plano OmniRoute", "Gemini roteado pelo OmniRoute"),
             AIModel("moonshotai/kimi-k2", AIProvider.OMNI_ROUTE, "Kimi K2", "conforme seu plano OmniRoute", "Kimi roteado pelo OmniRoute")
@@ -137,6 +150,7 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
             val defaultM = storage.getString(provider.modelDefaultsKey, provider.defaultModel)
             _selectedModel.value = defaultM
         }
+        _candidateModel.value = _selectedModel.value
     }
 
     fun setAnthropicApiKey(key: String) {
@@ -154,8 +168,42 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
         storage.saveString(AIProvider.OMNI_ROUTE.keychainKey, key)
     }
 
+    fun refreshSelectedProviderModels() {
+        val provider = _selectedProvider.value
+        val key = currentApiKey().trim()
+        if (key.isEmpty() || _isLoadingProviderModels.value) return
+        _isLoadingProviderModels.value = true
+        _modelCatalogError.value = ""
+        viewModelScope.launch {
+            try {
+                val models = client.listModels(provider, key)
+                _availableProviderModels.value = _availableProviderModels.value + (provider to models)
+                if (_candidateModel.value !in models) {
+                    _candidateModel.value = _selectedModel.value.takeIf { it in models } ?: models.firstOrNull().orEmpty()
+                }
+                _modelTestLine.value = "${models.size} modelos acessíveis retornados por ${provider.label}."
+            } catch (e: Exception) {
+                _modelCatalogError.value = e.message ?: "Erro ao consultar catálogo."
+                _modelTestLine.value = "Falha ao listar modelos: ${_modelCatalogError.value}"
+            } finally {
+                _isLoadingProviderModels.value = false
+            }
+        }
+    }
+
+    fun setCandidateModel(modelId: String) {
+        _candidateModel.value = modelId
+        _modelTestLine.value = "Modelo $modelId selecionado para teste."
+    }
+
+    fun useCandidateModel() {
+        setSelectedModel(_candidateModel.value)
+        _modelTestLine.value = "${_candidateModel.value} definido como modelo ativo do Jarvis."
+    }
+
     fun setSelectedModel(modelId: String) {
         _selectedModel.value = modelId
+        _candidateModel.value = modelId
         storage.saveString(_selectedProvider.value.modelDefaultsKey, modelId)
     }
 
@@ -210,11 +258,11 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
         }
 
         _isTestingModel.value = true
-        _modelTestLine.value = "Testando ${_selectedProvider.value.label} / ${_selectedModel.value}..."
+        _modelTestLine.value = "Testando ${_selectedProvider.value.label} / ${_candidateModel.value}..."
 
         viewModelScope.launch {
             try {
-                val result = client.testModel(_selectedProvider.value, currentKey, _selectedModel.value)
+                val result = client.testModel(_selectedProvider.value, currentKey, _candidateModel.value)
                 val usage = "${result.inputTokens ?: "n/d"} entrada / ${result.outputTokens ?: "n/d"} saída"
                 _modelTestLine.value = "Provedor: ${_selectedProvider.value.label}\nPedido: ${result.requestedModel}\nResposta API: ${result.responseModel}\nTokens: $usage\nRetorno: ${result.text}"
             } catch (e: Exception) {
@@ -234,7 +282,11 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
     fun availableVoiceOptions(): List<JarvisVoiceOption> = speaker.getAvailableVoices()
 
     fun availableModelsForSelectedProvider(): List<AIModel> {
-        return availableModels.filter { it.provider == _selectedProvider.value }
+        val provider = _selectedProvider.value
+        return _availableProviderModels.value[provider].orEmpty().map { id ->
+            availableModels.firstOrNull { it.provider == provider && it.id == id }
+                ?: AIModel(id, provider, id, "disponível na API", "Retornado pelo catálogo autenticado")
+        }
     }
 
     fun currentApiKey(): String {
@@ -459,6 +511,7 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
             AIProvider.ANTHROPIC -> storage.getString(AIProvider.ANTHROPIC.modelDefaultsKey, AIProvider.ANTHROPIC.defaultModel)
             AIProvider.OPEN_ROUTER -> storage.getString(AIProvider.OPEN_ROUTER.modelDefaultsKey, AIProvider.OPEN_ROUTER.defaultModel)
             AIProvider.OMNI_ROUTE -> storage.getString(AIProvider.OMNI_ROUTE.modelDefaultsKey, AIProvider.OMNI_ROUTE.defaultModel)
+                .let { saved -> if (saved == "cc/claude-fable-5") AIProvider.OMNI_ROUTE.defaultModel else saved }
         }
     }
 
