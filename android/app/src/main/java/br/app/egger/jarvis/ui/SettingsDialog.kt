@@ -53,6 +53,7 @@ fun SettingsDialog(
     val selectedProvider by session.selectedProvider.collectAsState()
     val anthropicApiKey by session.anthropicApiKey.collectAsState()
     val openRouterApiKey by session.openRouterApiKey.collectAsState()
+    val omniRouteApiKey by session.omniRouteApiKey.collectAsState()
     val selectedModel by session.selectedModel.collectAsState()
     val selectedVoicePreference by session.selectedVoicePreference.collectAsState()
     val selectedVoiceIdentifier by session.selectedVoiceIdentifier.collectAsState()
@@ -66,6 +67,7 @@ fun SettingsDialog(
     val currentApiKey = when (selectedProvider) {
         AIProvider.ANTHROPIC -> anthropicApiKey
         AIProvider.OPEN_ROUTER -> openRouterApiKey
+        AIProvider.OMNI_ROUTE -> omniRouteApiKey
     }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -143,6 +145,7 @@ fun SettingsDialog(
                                     when (selectedProvider) {
                                         AIProvider.ANTHROPIC -> session.setAnthropicApiKey(it)
                                         AIProvider.OPEN_ROUTER -> session.setOpenRouterApiKey(it)
+                                        AIProvider.OMNI_ROUTE -> session.setOmniRouteApiKey(it)
                                     }
                                 },
                                 placeholder = { Text(selectedProvider.apiKeyPlaceholder, color = Color.Gray) },

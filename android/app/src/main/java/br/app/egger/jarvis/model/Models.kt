@@ -26,6 +26,14 @@ enum class AIProvider(
         modelDefaultsKey = "openrouter_model",
         defaultModel = "openrouter/auto",
         apiKeyPlaceholder = "OpenRouter API key"
+    ),
+    OMNI_ROUTE(
+        id = "omniRoute",
+        label = "OmniRoute",
+        keychainKey = "omniroute_key",
+        modelDefaultsKey = "omniroute_model",
+        defaultModel = "openai/gpt-4o-mini",
+        apiKeyPlaceholder = "OmniRoute API key"
     );
 
     companion object {

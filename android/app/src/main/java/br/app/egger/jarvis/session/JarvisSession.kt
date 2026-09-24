@@ -61,6 +61,9 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
     private val _openRouterApiKey = MutableStateFlow(storage.getString(AIProvider.OPEN_ROUTER.keychainKey, ""))
     val openRouterApiKey: StateFlow<String> = _openRouterApiKey.asStateFlow()
 
+    private val _omniRouteApiKey = MutableStateFlow(storage.getString(AIProvider.OMNI_ROUTE.keychainKey, ""))
+    val omniRouteApiKey: StateFlow<String> = _omniRouteApiKey.asStateFlow()
+
     private val _selectedModel = MutableStateFlow(storage.getString("anthropic_model", AIProvider.ANTHROPIC.defaultModel))
     val selectedModel: StateFlow<String> = _selectedModel.asStateFlow()
 
@@ -111,7 +114,12 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
             AIModel("openrouter/auto", AIProvider.OPEN_ROUTER, "OpenRouter Auto", "roteamento automático", "Escolhe um modelo adequado automaticamente"),
             AIModel("~openai/gpt-latest", AIProvider.OPEN_ROUTER, "OpenAI GPT Latest", "via OpenRouter", "Alias para o GPT flagship mais recente"),
             AIModel("anthropic/claude-sonnet-4.5", AIProvider.OPEN_ROUTER, "Claude Sonnet via OpenRouter", "via OpenRouter", "Claude por agregador"),
-            AIModel("google/gemini-2.5-pro", AIProvider.OPEN_ROUTER, "Gemini Pro via OpenRouter", "via OpenRouter", "Google por agregador")
+            AIModel("google/gemini-2.5-pro", AIProvider.OPEN_ROUTER, "Gemini Pro via OpenRouter", "via OpenRouter", "Google por agregador"),
+            AIModel("openai/gpt-4o-mini", AIProvider.OMNI_ROUTE, "GPT-4o Mini", "conforme seu plano OmniRoute", "Modelo econômico via OmniRoute"),
+            AIModel("openai/gpt-4o", AIProvider.OMNI_ROUTE, "GPT-4o", "conforme seu plano OmniRoute", "Modelo multimodal via OmniRoute"),
+            AIModel("anthropic/claude-sonnet-4.5", AIProvider.OMNI_ROUTE, "Claude Sonnet", "conforme seu plano OmniRoute", "Claude roteado pelo OmniRoute"),
+            AIModel("google/gemini-2.5-pro", AIProvider.OMNI_ROUTE, "Gemini Pro", "conforme seu plano OmniRoute", "Gemini roteado pelo OmniRoute"),
+            AIModel("moonshotai/kimi-k2", AIProvider.OMNI_ROUTE, "Kimi K2", "conforme seu plano OmniRoute", "Kimi roteado pelo OmniRoute")
         )
     }
 
@@ -139,6 +147,11 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
     fun setOpenRouterApiKey(key: String) {
         _openRouterApiKey.value = key
         storage.saveString(AIProvider.OPEN_ROUTER.keychainKey, key)
+    }
+
+    fun setOmniRouteApiKey(key: String) {
+        _omniRouteApiKey.value = key
+        storage.saveString(AIProvider.OMNI_ROUTE.keychainKey, key)
     }
 
     fun setSelectedModel(modelId: String) {
@@ -228,6 +241,7 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
         return when (_selectedProvider.value) {
             AIProvider.ANTHROPIC -> _anthropicApiKey.value
             AIProvider.OPEN_ROUTER -> _openRouterApiKey.value
+            AIProvider.OMNI_ROUTE -> _omniRouteApiKey.value
         }
     }
 
@@ -436,6 +450,7 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
         return when (provider) {
             AIProvider.ANTHROPIC -> _anthropicApiKey.value
             AIProvider.OPEN_ROUTER -> _openRouterApiKey.value
+            AIProvider.OMNI_ROUTE -> _omniRouteApiKey.value
         }
     }
 
@@ -443,6 +458,7 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
         return when (provider) {
             AIProvider.ANTHROPIC -> storage.getString(AIProvider.ANTHROPIC.modelDefaultsKey, AIProvider.ANTHROPIC.defaultModel)
             AIProvider.OPEN_ROUTER -> storage.getString(AIProvider.OPEN_ROUTER.modelDefaultsKey, AIProvider.OPEN_ROUTER.defaultModel)
+            AIProvider.OMNI_ROUTE -> storage.getString(AIProvider.OMNI_ROUTE.modelDefaultsKey, AIProvider.OMNI_ROUTE.defaultModel)
         }
     }
 

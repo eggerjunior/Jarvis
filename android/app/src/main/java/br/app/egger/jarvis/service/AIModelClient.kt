@@ -138,7 +138,54 @@ class AIModelClient {
         return when (provider) {
             AIProvider.ANTHROPIC -> sendAnthropic(apiKey, model, system, messages, maxTokens)
             AIProvider.OPEN_ROUTER -> sendOpenRouter(apiKey, model, system, messages, maxTokens, enableWebSearch)
+            AIProvider.OMNI_ROUTE -> sendOmniRoute(apiKey, model, system, messages, maxTokens)
         }
+    }
+
+    private fun sendOmniRoute(
+        apiKey: String,
+        model: String,
+        system: String,
+        messages: List<ClaudeMessage>,
+        maxTokens: Int
+    ): AIModelResult {
+        val routedMessages = mutableListOf(ClaudeMessage("system", system))
+        routedMessages.addAll(messages)
+        val payload = OpenRouterRequest(
+            model = model,
+            messages = routedMessages,
+            maxTokens = maxTokens,
+            tools = null
+        )
+        val request = Request.Builder()
+            .url("https://omniroute.egger.app.br/v1/chat/completions")
+            .post(gson.toJson(payload).toRequestBody(jsonMediaType))
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Content-Type", "application/json")
+            .build()
+
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string() ?: ""
+        if (!response.isSuccessful) {
+            val errorMsg = try {
+                val err = gson.fromJson(responseBody, OpenRouterErrorResponse::class.java)
+                err?.error?.message ?: "Erro HTTP ${response.code}."
+            } catch (e: Exception) {
+                "Erro HTTP ${response.code}."
+            }
+            throw IOException(errorMsg)
+        }
+
+        val decoded = gson.fromJson(responseBody, OpenRouterResponse::class.java)
+        val text = decoded?.choices?.firstOrNull()?.message?.content?.trim()
+            ?: "Recebi uma resposta vazia, Senhor."
+        return AIModelResult(
+            text = text,
+            requestedModel = model,
+            responseModel = decoded?.model ?: model,
+            inputTokens = decoded?.usage?.promptTokens,
+            outputTokens = decoded?.usage?.completionTokens
+        )
     }
 
     private fun sendAnthropic(
