@@ -304,7 +304,7 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
             _state.value = JarvisState.LISTENING
         } catch (e: Exception) {
             _state.value = JarvisState.ERROR
-            _assistantLine.value = e.localizedMessage ?: "Erro no reconhecedor."
+            _assistantLine.value = "Não consegui iniciar a escuta. Verifique a permissão do microfone e tente novamente."
         }
     }
 
@@ -555,8 +555,14 @@ class JarvisSession(context: Context) : ViewModel(), JarvisSpeechRecognizerListe
     }
 
     override fun onError(errorMessage: String) {
-        if (_isActivated.value && _state.value == JarvisState.LISTENING) {
-            // Keep listening unless explicit error
+        if (!_isActivated.value || _state.value != JarvisState.LISTENING) return
+        _state.value = JarvisState.ERROR
+        _assistantLine.value = when {
+            errorMessage.contains("indisponível", ignoreCase = true) ->
+                "O reconhecimento de voz não está disponível neste dispositivo."
+            errorMessage.contains("permissão", ignoreCase = true) ->
+                "Permita o acesso ao microfone para conversar com o Jarvis."
+            else -> "Tive um problema para ouvir. Toque em Ativar e tente novamente."
         }
     }
 

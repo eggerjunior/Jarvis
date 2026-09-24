@@ -28,6 +28,10 @@ class JarvisSpeechRecognizer(private val context: Context) {
     private var isListening: Boolean = false
 
     fun start() {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            handler.post { start() }
+            return
+        }
         stop()
 
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
@@ -99,6 +103,10 @@ class JarvisSpeechRecognizer(private val context: Context) {
     }
 
     fun stop() {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            handler.post { stop() }
+            return
+        }
         cancelSilenceTimer()
         isListening = false
         speechRecognizer?.stopListening()
